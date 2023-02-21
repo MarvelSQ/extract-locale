@@ -1,0 +1,28 @@
+{
+  "name": "extract-locale",
+  "bin": "bin.js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc --outDir lib"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/generator": "^7.17.9",
+    "@babel/parser": "^7.17.9",
+    "@babel/traverse": "^7.17.9",
+    "@babel/types": "^7.17.0",
+    "@types/babel__generator": "^7.6.4",
+    "@types/babel__traverse": "^7.17.0",
+    "@types/inquirer": "^8.2.1",
+    "chalk": "4",
+    "commander": "^9.4.0",
+    "glob": "^8.0.1",
+    "inquirer": "^8.2.3",
+    "prettier": "^2.7.1",
+    "typescript": "^4.6.3"
+  }
+}
