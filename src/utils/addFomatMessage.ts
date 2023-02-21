@@ -4,6 +4,7 @@ import * as t from "@babel/types";
 import { getNewKey } from "./extra";
 import { isInsideArguments } from "./isInsideArguments";
 import allowUseHook from "./allowUseHook";
+import { replaceTemplateElement } from "./TemplateElement";
 
 function createFormat(
   text: string,
@@ -54,7 +55,22 @@ function replaceText(
       t.jsxText(endSpaces),
     ]);
   } else if (t.isTemplateElement(path.node)) {
-    // empty
+    const text = path.node.value.raw;
+    const rawText = text.replace(/^[\n\s]*/, "").replace(/[\n\s]*$/, "");
+    const foreSpaces = text.match(/^[\n\s]*/)?.[0] || "";
+    const endSpaces = text.match(/[\n\s]*$/)?.[0] || "";
+
+    const expression = createFormat(rawText, {
+      intlKey,
+      formatMessageKey,
+    });
+
+    replaceTemplateElement(
+      path as any,
+      expression,
+      t.templateElement({ raw: foreSpaces, cooked: foreSpaces }),
+      t.templateElement({ raw: endSpaces, cooked: endSpaces })
+    );
   } else if (t.isJSXAttribute(path.parentPath.node)) {
     path.replaceWith(
       t.jsxExpressionContainer(

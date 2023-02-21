@@ -5,7 +5,9 @@ import { needLocale } from "./extra";
 export default function removeUnchangePath(
   path: NodePath<t.JSXText | t.StringLiteral | t.TemplateElement>
 ) {
-  const text = t.isTemplateElement(path.node) ? path.node.value.raw : path.node.value;
+  const text = t.isTemplateElement(path.node)
+    ? path.node.value.raw
+    : path.node.value;
 
   /**
    * 不处理 import xxx from 'xxx'

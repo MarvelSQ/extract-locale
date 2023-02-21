@@ -31,6 +31,9 @@ export default async function readString(
     StringLiteral(path) {
       paths.push(path);
     },
+    TemplateElement(path) {
+      paths.push(path);
+    },
   });
 
   paths = paths.filter((path) => removeUnchangePath(path));
