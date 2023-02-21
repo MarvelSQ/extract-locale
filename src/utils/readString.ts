@@ -14,6 +14,7 @@ import addFormatMessage from "./addFomatMessage";
 import { addImportFormatMessage, addImportUseIntl } from "./addIntlProvider";
 import removeUnchangePath from "./removeUnchangePath";
 import { getAutoReplace } from "./extra";
+import { postFormat } from "./postFormat";
 
 export default async function readString(
   ast: ParseResult<File>,
@@ -97,6 +98,10 @@ ${paragraph}
   }
   if (changed.includes("formatMessage")) {
     addImportFormatMessage(ast);
+  }
+
+  if (changed.filter(Boolean).length) {
+    postFormat(ast);
   }
 
   return changed.length === 0 || changed.every((item) => item === false)
