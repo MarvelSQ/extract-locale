@@ -5,51 +5,106 @@ import { getNewKey } from "./extra";
 import { isInsideArguments } from "./isInsideArguments";
 import allowUseHook from "./allowUseHook";
 
+function createFormat(
+  text: string,
+  {
+    intlKey,
+    formatMessageKey,
+  }: {
+    intlKey?: string | null;
+    formatMessageKey: string;
+  }
+) {
+  const localeKey = getNewKey(text);
+  return t.callExpression(
+    intlKey
+      ? t.memberExpression(
+          t.identifier(intlKey),
+          t.identifier(formatMessageKey)
+        )
+      : t.identifier(formatMessageKey),
+    [t.stringLiteral(localeKey)]
+  );
+}
+
+function replaceText(
+  path: NodePath<t.JSXText | t.StringLiteral | t.TemplateElement>,
+  {
+    intlKey,
+    formatMessageKey,
+  }: {
+    intlKey?: string | null;
+    formatMessageKey: string;
+  }
+) {
+  if (t.isJSXText(path.node)) {
+    const text = path.node.value;
+    const rawText = text.trim();
+    const foreSpaces = text.match(/^\s*/)?.[0] || "";
+    const endSpaces = text.match(/\s*$/)?.[0] || "";
+
+    const expression = createFormat(rawText, {
+      intlKey,
+      formatMessageKey,
+    });
+
+    path.replaceWithMultiple([
+      t.jsxText(foreSpaces),
+      t.jsxExpressionContainer(expression),
+      t.jsxText(endSpaces),
+    ]);
+  } else if (t.isTemplateElement(path.node)) {
+    // empty
+  } else if (t.isJSXAttribute(path.parentPath.node)) {
+    path.replaceWith(
+      t.jsxExpressionContainer(
+        createFormat(path.node.value, {
+          intlKey,
+          formatMessageKey,
+        })
+      )
+    );
+  } else {
+    path.replaceWith(
+      createFormat(path.node.value, {
+        intlKey,
+        formatMessageKey,
+      })
+    );
+  }
+}
+
 function addFormatMessage(
   path: NodePath<t.JSXText | t.StringLiteral | t.TemplateElement>
 ): false | "formatMessage" | "intl" {
-  const isJSX =
-    t.isJSXText(path.node) || t.isJSXAttribute(path.parentPath.node);
-
-  const isObjectKey =
-    path.parentKey === "key" && path.parentPath.isObjectProperty();
-
+  // 准备阶段
   /**
    * convert {'xxx': xxx} => {[call('xxxx')]: xxx}
    */
-  if (isObjectKey) {
+  if (path.parentKey === "key" && path.parentPath.isObjectProperty()) {
     (path.parentPath.node as t.ObjectProperty).computed = true;
   }
 
-  const text = t.isTemplateElement(path.node)
-    ? path.node.value.raw
-    : path.node.value;
-
+  // 获取顶层函数
   const toplevelFunction = getTopLevelFunction(path);
-
   if (toplevelFunction === true) {
     return false;
   }
 
   /**
    * 字符串不在函数内 或 字符串在参数内
+   * 仅使用 formatMessage 作为函数
    */
   let useFormatMessage =
     toplevelFunction === false ||
     isInsideArguments(path) ||
     !allowUseHook(toplevelFunction);
 
+  // this condition is redundant, but it can help typescript to narrow the type
   if (toplevelFunction === false || useFormatMessage) {
-    const callFormatMessage = t.callExpression(t.identifier("formatMessage"), [
-      t.stringLiteral(getNewKey(text)),
-    ]);
-    if (isJSX) {
-      path.replaceWith(t.jsxExpressionContainer(callFormatMessage));
-    } else if (t.isTemplateElement(path.node)) {
-      // path.replaceWith(t.)
-    } else {
-      path.replaceWith(callFormatMessage);
-    }
+    replaceText(path, {
+      formatMessageKey: "formatMessage",
+    });
     return "formatMessage";
   }
 
@@ -128,24 +183,14 @@ function addFormatMessage(
     }
   }
 
-  if (intlKey) {
-    let expression: any = t.callExpression(
-      t.memberExpression(t.identifier(intlKey), t.identifier("formatMessage")),
-      [t.stringLiteral(getNewKey(text))]
-    );
-    if (isJSX) expression = t.jsxExpressionContainer(expression);
-    path.replaceWith(expression);
-    return "intl";
-  } else if (formatMessageKey) {
-    let expression: any = t.callExpression(t.identifier(formatMessageKey), [
-      t.stringLiteral(getNewKey(text)),
-    ]);
-    if (isJSX) expression = t.jsxExpressionContainer(expression);
-    path.replaceWith(expression);
-    return "intl";
+  if (intlKey || formatMessageKey) {
+    replaceText(path, {
+      intlKey,
+      formatMessageKey: formatMessageKey || "formatMessage",
+    });
   }
 
-  return false;
+  return "intl";
 }
 
 export default addFormatMessage;
