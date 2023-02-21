@@ -85,11 +85,6 @@ ${paragraph}
           need: perferAnswer ? false : true,
         }));
     if (result.need) {
-      if (path.isJSXText()) {
-        path.node.value = path.node.value
-          .replace(/^\n\s+/, "")
-          .replace(/\n\s+$/, "");
-      }
       changed.push(addFormatMessage(path));
     }
   }

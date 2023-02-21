@@ -39,9 +39,9 @@ function replaceText(
 ) {
   if (t.isJSXText(path.node)) {
     const text = path.node.value;
-    const rawText = text.trim();
-    const foreSpaces = text.match(/^\s*/)?.[0] || "";
-    const endSpaces = text.match(/\s*$/)?.[0] || "";
+    const rawText = text.replace(/^[\n\s]*/, "").replace(/[\n\s]*$/, "");
+    const foreSpaces = text.match(/^[\n\s]*/)?.[0] || "";
+    const endSpaces = text.match(/[\n\s]*$/)?.[0] || "";
 
     const expression = createFormat(rawText, {
       intlKey,
