@@ -1,5 +1,5 @@
 {
-  "name": "extract-locale",
+  "name": "@marvelsq/extract-locale",
   "bin": "bin.js",
   "version": "1.0.0",
   "description": "",
