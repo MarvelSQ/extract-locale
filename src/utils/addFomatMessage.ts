@@ -204,9 +204,10 @@ function addFormatMessage(
       intlKey,
       formatMessageKey: formatMessageKey || "formatMessage",
     });
+    return intlKey ? "intl" : "formatMessage";
   }
 
-  return "intl";
+  return false;
 }
 
 export default addFormatMessage;
