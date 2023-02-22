@@ -4,28 +4,36 @@ let CurrentKeys: string[] = [];
 
 let LocaleMap: Record<string, string> = {};
 
-let compact = true;
-
 export function needLocale(text: string) {
   return text.trim() && !text.trim().startsWith(config.localePrefix);
 }
 
-export function getNewKey(text: string) {
-  const index = CurrentKeys.length;
-  let newKey = config.localePrefix + (config.localeOffset + index);
-  if (compact) {
-    let existKey = null;
-    Object.entries({ ...config.externalLocaleMap, ...LocaleMap }).some(
-      ([key, value]) => {
-        if (value === text) {
-          existKey = key;
-        }
-      }
-    );
-    if (existKey) {
-      return existKey;
-    }
+let lastIndex = 1;
+
+function generateKey(): string {
+  const key = config.localePrefix + (config.localeOffset + lastIndex++);
+  if (config.externalLocaleMap.hasOwnProperty(key)) {
+    return generateKey();
   }
+  return key;
+}
+
+export function getNewKey(text: string) {
+  const existLocale = Object.entries({
+    ...config.externalLocaleMap,
+    ...LocaleMap,
+  }).find(([key, value]) => {
+    if (value === text) {
+      return true;
+    }
+    return false;
+  });
+
+  if (existLocale) {
+    return existLocale.at(0) as string;
+  }
+
+  const newKey = generateKey();
   LocaleMap[newKey] = text;
   CurrentKeys.push(newKey);
   return newKey;
