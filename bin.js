@@ -18,6 +18,7 @@ program.option("-l, --locale <locale>", "existing locale file");
 program.option("-p, --prefix <prefix>", "locale key prefix");
 program.option("-o, --offset <offset>", "offset of locale");
 program.option("-A, --no-auto", "replace locale manually");
+program.option("--no-auto-name", "set locale key manually");
 
 program.parse();
 
@@ -85,7 +86,7 @@ async function readFiles(filenames) {
       encoding: "utf-8",
     });
 
-    await readFile(result, file, options.auto).then(async ({ changed, code }) => {
+    await readFile(result, file, options).then(async ({ changed, code }) => {
       if (changed) {
         console.log(`${file} is formatted`);
         fs.writeFile(

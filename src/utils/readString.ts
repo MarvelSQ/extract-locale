@@ -13,7 +13,13 @@ import {
 import addFormatMessage from "./addFomatMessage";
 import { addImportFormatMessage, addImportUseIntl } from "./addIntlProvider";
 import removeUnchangePath from "./removeUnchangePath";
-import { getAutoReplace } from "./extra";
+import {
+  getAutoName,
+  getAutoReplace,
+  getNextKey,
+  getPrefixKey,
+  isKeyExist,
+} from "./extra";
 import { postFormat } from "./postFormat";
 
 export default async function readString(
@@ -21,6 +27,8 @@ export default async function readString(
   fileContent: string
 ) {
   const autoReplace = getAutoReplace();
+
+  const autoName = getAutoName();
 
   let changed: (false | "formatMessage" | "intl")[] = [];
 
@@ -62,34 +70,54 @@ export default async function readString(
     // value中是否存在中文字符
     const perferAnswer = value.match(/[\u4e00-\u9fa5]/g) ? 0 : 1;
 
-    const result = await (!autoReplace
-      ? inquirer.prompt([
-          {
-            type: "list",
-            name: "need",
-            message: `convert "${printValue}" to formatMessage?
+    const questions = [
+      {
+        type: "list",
+        name: "need",
+        message: `convert "${printValue}" to formatMessage?
 ------file-----
 ${paragraph}
 ------file-----
 `,
-            choices: [
-              {
-                name: "Yes",
-                value: true,
-              },
-              {
-                name: "No",
-                value: false,
-              },
-            ],
-            default: perferAnswer,
+        choices: [
+          {
+            name: "Yes",
+            value: true,
           },
-        ])
-      : Promise.resolve({
-          need: perferAnswer ? false : true,
-        }));
-    if (result.need) {
-      changed.push(addFormatMessage(path));
+          {
+            name: "No",
+            value: false,
+          },
+        ],
+        default: perferAnswer,
+        when: !autoReplace,
+      },
+      {
+        type: "input",
+        name: "localeKey",
+        message: `please input Locale Key for this text "${printValue}"?
+------file-----
+${paragraph}
+------file-----
+`,
+        validate: (key: string) => {
+          const isExist = isKeyExist(key);
+          if (isExist) {
+            return `key ${key} is exist`;
+          }
+          return true;
+        },
+        transformer(input: string) {
+          return getPrefixKey(input);
+        },
+        default: getNextKey(),
+        when: autoReplace ? !perferAnswer && !autoName : !autoName,
+      },
+    ];
+
+    const result = await inquirer.prompt(questions);
+    if (result.need ?? !perferAnswer) {
+      changed.push(addFormatMessage(path, result.localeKey));
     }
   }
 

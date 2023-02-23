@@ -1,14 +1,18 @@
 import { parse } from "@babel/parser";
 import generator from "@babel/generator";
 import readString from "./utils/readString";
-import { setAutoReplace } from "./utils/extra";
+import { setAutoName, setAutoReplace } from "./utils/extra";
 
 export async function readFile(
   fileContent: string,
   fileName: string,
-  auto = false
+  options: {
+    auto: boolean;
+    autoName: boolean;
+  }
 ) {
-  setAutoReplace(auto);
+  setAutoReplace(options.auto);
+  setAutoName(options.autoName);
 
   const ast = parse(fileContent, {
     sourceFilename: fileName,

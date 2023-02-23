@@ -11,12 +11,14 @@ function createFormat(
   {
     intlKey,
     formatMessageKey,
+    localeKey: inputLocaleKey,
   }: {
     intlKey?: string | null;
     formatMessageKey: string;
+    localeKey: string | undefined;
   }
 ) {
-  const localeKey = getNewKey(text);
+  const localeKey = getNewKey(text, inputLocaleKey);
   return t.callExpression(
     intlKey
       ? t.memberExpression(
@@ -33,9 +35,11 @@ function replaceText(
   {
     intlKey,
     formatMessageKey,
+    localeKey,
   }: {
     intlKey?: string | null;
     formatMessageKey: string;
+    localeKey: string | undefined;
   }
 ) {
   if (t.isJSXText(path.node)) {
@@ -47,6 +51,7 @@ function replaceText(
     const expression = createFormat(rawText, {
       intlKey,
       formatMessageKey,
+      localeKey,
     });
 
     path.replaceWithMultiple([
@@ -63,6 +68,7 @@ function replaceText(
     const expression = createFormat(rawText, {
       intlKey,
       formatMessageKey,
+      localeKey,
     });
 
     replaceTemplateElement(
@@ -77,6 +83,7 @@ function replaceText(
         createFormat(path.node.value, {
           intlKey,
           formatMessageKey,
+          localeKey,
         })
       )
     );
@@ -85,13 +92,15 @@ function replaceText(
       createFormat(path.node.value, {
         intlKey,
         formatMessageKey,
+        localeKey,
       })
     );
   }
 }
 
 function addFormatMessage(
-  path: NodePath<t.JSXText | t.StringLiteral | t.TemplateElement>
+  path: NodePath<t.JSXText | t.StringLiteral | t.TemplateElement>,
+  localeKey: string | undefined
 ): false | "formatMessage" | "intl" {
   // 准备阶段
   /**
@@ -120,6 +129,7 @@ function addFormatMessage(
   if (toplevelFunction === false || useFormatMessage) {
     replaceText(path, {
       formatMessageKey: "formatMessage",
+      localeKey,
     });
     return "formatMessage";
   }
@@ -203,6 +213,7 @@ function addFormatMessage(
     replaceText(path, {
       intlKey,
       formatMessageKey: formatMessageKey || "formatMessage",
+      localeKey,
     });
     return intlKey ? "intl" : "formatMessage";
   }

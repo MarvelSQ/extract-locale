@@ -18,7 +18,32 @@ function generateKey(): string {
   return key;
 }
 
-export function getNewKey(text: string) {
+export function isKeyExist(key: string) {
+  return (
+    getPrefixKey(key) in
+    {
+      ...config.externalLocaleMap,
+      ...LocaleMap,
+    }
+  );
+}
+
+export function getPrefixKey(key: string) {
+  return `${config.localePrefix}${key}`;
+}
+
+export function getNextKey() {
+  return config.localePrefix + (config.localeOffset + lastIndex);
+}
+
+export function getNewKey(text: string, inputLocaleKey?: string) {
+  if (inputLocaleKey) {
+    const prefixedKey = getPrefixKey(inputLocaleKey);
+    LocaleMap[prefixedKey] = text;
+    CurrentKeys.push(prefixedKey);
+    return prefixedKey;
+  }
+
   const existLocale = Object.entries({
     ...config.externalLocaleMap,
     ...LocaleMap,
@@ -56,4 +81,14 @@ export function getAutoReplace() {
 
 export function setAutoReplace(auto: boolean) {
   autoReplace = auto;
+}
+
+let autoName = true;
+
+export function getAutoName() {
+  return autoName;
+}
+
+export function setAutoName(auto: boolean) {
+  autoName = auto;
 }

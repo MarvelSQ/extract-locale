@@ -60,3 +60,4 @@ const App = (user) => {
 | --prefix <prefix> | -p   | 国际化文案的前缀(`@LOCALE_TEXT_`) |
 | --offset <offset> | -o   | 起始序号(`0`)                     |
 | --no-auto         | -A   | 是否禁止自动替换(`false`)         |
+| --no-auto-name    |      | 是否禁止自动命名(`false`)         |
