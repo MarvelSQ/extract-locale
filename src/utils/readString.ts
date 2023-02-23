@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import inquirer from "inquirer";
+import inquirer, { QuestionCollection } from "inquirer";
 
 import { ParseResult } from "@babel/parser";
 import traverse, { NodePath } from "@babel/traverse";
@@ -70,7 +70,10 @@ export default async function readString(
     // value中是否存在中文字符
     const perferAnswer = value.match(/[\u4e00-\u9fa5]/g) ? 0 : 1;
 
-    const questions = [
+    const questions: QuestionCollection<{
+      need: boolean;
+      localeKey: string;
+    }> = [
       {
         type: "list",
         name: "need",
@@ -111,7 +114,12 @@ ${paragraph}
           return getPrefixKey(input);
         },
         default: getNextKey(),
-        when: autoReplace ? !perferAnswer && !autoName : !autoName,
+        when: (data) => {
+          if (autoReplace) {
+            return !autoName && !perferAnswer;
+          }
+          return !autoName && data.need;
+        },
       },
     ];
 
