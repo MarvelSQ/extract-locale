@@ -43,7 +43,7 @@ export default async function readString(
     const value = isTemplateElement(path.node)
       ? path.node.value.raw
       : path.node.value;
-    const printValue = chalk.red(path.node.value);
+    const printValue = chalk.red(value);
 
     const startLine = path.node.loc?.start.line;
     const endLine = path.node.loc?.end.line;
