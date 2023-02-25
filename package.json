@@ -13,7 +13,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --outDir lib",
-    "doc:dev": "vite --config docs/vite.config.js"
+    "doc:dev": "vite --config docs/vite.config.js",
+    "doc:build": "vite build --config docs/vite.config.js"
   },
   "author": "",
   "license": "ISC",
