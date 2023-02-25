@@ -3,8 +3,6 @@
 const fs = require("fs");
 const path = require("path");
 
-const glob = require("glob");
-
 const { readFile } = require("./lib");
 const { getLocaleMap } = require("./lib/utils/extra");
 const config = require("./lib/config");
@@ -73,11 +71,6 @@ const filenames = program.args.filter((filename) => {
 
 console.log(filenames);
 
-// glob(filename, {}, async (err, files) => {
-//   if (err) {
-//     console.error(err);
-//     return;
-//   }
 async function readFiles(filenames) {
   for (let file of filenames) {
     console.log(`processing ${file}`);
