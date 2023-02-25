@@ -1,0 +1,54 @@
+name: publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version"
+        required: true
+        type: string
+      channel:
+        description: "Channel"
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: using pnpm
+        uses: pnpm/action-setup@v2.2.2
+        with:
+          version: 7.x
+
+      - name: install dependencies
+        run: pnpm i
+
+      - name: run test script
+        run: npm test
+
+      - name: publish
+        run: |
+          git config user.name action
+          git config user.email action@github.com
+          npm run build
+          echo generating version ${{ inputs.version }}
+          npm config set '//registry.npmjs.org/:_authToken' "${NPM_TOKEN}"
+          npm version ${{ inputs.version }} && npm publish --tag=${{ inputs.channel }}
+        env:
+          NPM_TOKEN: ${{ secrets.NPMJS_PUBLISH_TOKEN }}
+
+      - name: sync build
+        run: |
+          git push --follow-tags
