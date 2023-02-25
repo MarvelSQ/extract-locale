@@ -1,6 +1,7 @@
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
+import { config } from "../config";
 
 export function readLocaleMap(fileContent: string, filename: string) {
   const ast = parse(fileContent, {
@@ -13,7 +14,7 @@ export function readLocaleMap(fileContent: string, filename: string) {
 
   traverse(ast, {
     Identifier(path) {
-      if (path.node.name === "zh_CN") {
+      if (path.node.name === config.defaultLocale) {
         const parentPath = path.parentPath;
         if (parentPath.isObjectProperty()) {
           traverse(
