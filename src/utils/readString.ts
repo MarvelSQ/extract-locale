@@ -115,10 +115,8 @@ ${paragraph}
         },
         default: getNextKey(),
         when: (data) => {
-          if (autoReplace) {
-            return !autoName && !perferAnswer;
-          }
-          return !autoName && data.need;
+          if (autoName) return false;
+          return autoReplace ? !perferAnswer : data.need;
         },
       },
     ];
