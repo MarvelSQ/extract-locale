@@ -12,7 +12,8 @@
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc --outDir lib"
+    "build": "tsc --outDir lib",
+    "doc:dev": "vite --config docs/vite.config.js"
   },
   "author": "",
   "license": "ISC",
@@ -30,5 +31,9 @@
     "inquirer": "^8.2.3",
     "prettier": "^2.7.1",
     "typescript": "^4.6.3"
+  },
+  "devDependencies": {
+    "preact": "^10.13.0",
+    "vite": "^4.1.4"
   }
 }
