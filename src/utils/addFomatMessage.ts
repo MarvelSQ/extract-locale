@@ -5,6 +5,7 @@ import { getNewKey } from "./extra";
 import { isInsideArguments } from "./isInsideArguments";
 import allowUseHook from "./allowUseHook";
 import { replaceTemplateElement } from "./TemplateElement";
+import { getSpaces, getText } from "./getText";
 
 function createFormat(
   text: string,
@@ -42,13 +43,12 @@ function replaceText(
     localeKey: string | undefined;
   }
 ) {
-  if (t.isJSXText(path.node)) {
-    const text = path.node.value;
-    const rawText = text.replace(/^[\n\s]*/, "").replace(/[\n\s]*$/, "");
-    const foreSpaces = text.match(/^[\n\s]*/)?.[0] || "";
-    const endSpaces = text.match(/[\n\s]*$/)?.[0] || "";
+  const text = getText(path);
 
-    const expression = createFormat(rawText, {
+  if (t.isJSXText(path.node)) {
+    const [foreSpaces, endSpaces] = getSpaces(path as NodePath<t.JSXText>);
+
+    const expression = createFormat(text, {
       intlKey,
       formatMessageKey,
       localeKey,
@@ -60,12 +60,9 @@ function replaceText(
       t.jsxText(endSpaces),
     ]);
   } else if (t.isTemplateElement(path.node)) {
-    const text = path.node.value.raw;
-    const rawText = text.replace(/^[\n\s]*/, "").replace(/[\n\s]*$/, "");
-    const foreSpaces = text.match(/^[\n\s]*/)?.[0] || "";
-    const endSpaces = text.match(/[\n\s]*$/)?.[0] || "";
+    const [foreSpaces, endSpaces] = getSpaces(path as NodePath<t.JSXText>);
 
-    const expression = createFormat(rawText, {
+    const expression = createFormat(text, {
       intlKey,
       formatMessageKey,
       localeKey,
