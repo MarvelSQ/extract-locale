@@ -21,6 +21,7 @@ import {
   isKeyExist,
 } from "./extra";
 import { postFormat } from "./postFormat";
+import { getText } from "./getText";
 
 export default async function readString(
   ast: ParseResult<File>,
@@ -48,9 +49,7 @@ export default async function readString(
   paths = paths.filter((path) => removeUnchangePath(path));
 
   for (const path of paths) {
-    const value = isTemplateElement(path.node)
-      ? path.node.value.raw
-      : path.node.value;
+    const value = getText(path);
     const printValue = chalk.red(value);
 
     const startLine = path.node.loc?.start.line;
@@ -70,8 +69,11 @@ export default async function readString(
     // value中是否存在中文字符
     const perferAnswer = value.match(/[\u4e00-\u9fa5]/g) ? 0 : 1;
 
+    const defaultKey = getNextKey(value);
+
     const questions: QuestionCollection<{
       need: boolean;
+      useExistKey: boolean;
       localeKey: string;
     }> = [
       {
@@ -104,6 +106,7 @@ ${paragraph}
 ------file-----
 `,
         validate: (key: string) => {
+          if (key === defaultKey) return true;
           const isExist = isKeyExist(key);
           if (isExist) {
             return `key ${key} is exist`;
@@ -113,8 +116,9 @@ ${paragraph}
         transformer(input: string) {
           return getPrefixKey(input);
         },
-        default: getNextKey(),
+        default: defaultKey,
         when: (data) => {
+          if (data.useExistKey) return false;
           if (autoName) return false;
           return autoReplace ? !perferAnswer : data.need;
         },
@@ -123,7 +127,13 @@ ${paragraph}
 
     const result = await inquirer.prompt(questions);
     if (result.need ?? !perferAnswer) {
-      changed.push(addFormatMessage(path, result.localeKey));
+      path.node.start;
+      changed.push(
+        addFormatMessage(
+          path,
+          result.localeKey === defaultKey ? undefined : result.localeKey
+        )
+      );
     }
   }
 

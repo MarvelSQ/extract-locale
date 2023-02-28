@@ -28,11 +28,27 @@ export function isKeyExist(key: string) {
   );
 }
 
+function getMatchByText(text: string) {
+  return Object.entries({
+    ...config.externalLocaleMap,
+    ...LocaleMap,
+  }).find(([key, value]) => {
+    if (value === text) {
+      return true;
+    }
+    return false;
+  });
+}
+
 export function getPrefixKey(key: string) {
   return `${config.localePrefix}${key}`;
 }
 
-export function getNextKey() {
+export function getNextKey(text: string) {
+  const match = getMatchByText(text);
+  if (match) {
+    return match[0];
+  }
   return config.localePrefix + (config.localeOffset + lastIndex);
 }
 
@@ -44,15 +60,7 @@ export function getNewKey(text: string, inputLocaleKey?: string) {
     return prefixedKey;
   }
 
-  const existLocale = Object.entries({
-    ...config.externalLocaleMap,
-    ...LocaleMap,
-  }).find(([key, value]) => {
-    if (value === text) {
-      return true;
-    }
-    return false;
-  });
+  const existLocale = getMatchByText(text);
 
   if (existLocale) {
     return existLocale.at(0) as string;
