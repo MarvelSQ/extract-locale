@@ -9,6 +9,7 @@ const config = require("./lib/config");
 const { readLocaleMap } = require("./lib/utils/parseLocaleMap");
 const prettier = require("prettier");
 const { Command } = require("commander");
+const { run } = require("./run");
 
 const program = new Command();
 program.version("0.0.1");
@@ -22,85 +23,98 @@ program.parse();
 
 const options = program.opts();
 
-if (options.locale) {
-  const localeFilePath = path.resolve(process.cwd(), options.locale);
-  const localeFile = fs.readFileSync(localeFilePath, {
-    encoding: "utf-8",
-  });
-  const localeMap = readLocaleMap(localeFile, localeFilePath);
-
-  config.config.externalLocaleMap = localeMap;
-}
-
-if (options.offset) {
-  const base = parseInt(options.offset, 10);
-  config.config.localeOffset = base;
-}
-
-if (options.prefix) {
-  config.config.localePrefix = options.prefix;
-}
-
-// const currentDir = process.cwd();
-// const filename = path.resolve(currentDir, process.argv[2]);
-
-const filenames = program.args.filter((filename) => {
-  // no less file, no locale file, no mock file
-  if (filename.match(/(less|css|sass)$/)) {
-    return false;
-  }
-
-  if (filename.match(/mock/)) {
-    return false;
-  }
-
-  if (filename.match(/__tests__/)) {
-    return false;
-  }
-
-  if (filename.match(/locale/)) {
-    return false;
-  }
-
-  if (filename.match(/\.d\.ts$/)) {
-    return false;
-  }
-
-  return true;
-});
-
-console.log(filenames);
-
-async function readFiles(filenames) {
-  for (let file of filenames) {
-    console.log(`processing ${file}`);
-
-    const result = fs.readFileSync(file, {
+async function processLocaleMap() {
+  if (options.locale) {
+    const localeFilePath = path.resolve(process.cwd(), options.locale);
+    const localeFile = fs.readFileSync(localeFilePath, {
       encoding: "utf-8",
     });
+    let localeMap;
 
-    await readFile(result, file, options).then(async ({ changed, code }) => {
-      if (changed) {
-        console.log(`${file} is formatted`);
-        fs.writeFile(
-          file,
-          prettier.format(code, {
-            printWidth: 100,
-            singleQuote: true,
-            tabWidth: 2,
-            parser: "typescript",
-          }),
-          (err) => {
-            if (err) {
-              console.error(err);
-            }
-          }
-        );
-      }
-    });
+    try {
+      localeMap = await run(localeFilePath).then((module) => {
+        return module.default.zh_CN;
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
+    config.config.externalLocaleMap =
+      localeMap || readLocaleMap(localeFile, localeFilePath);
   }
-  console.log(JSON.stringify(getLocaleMap(), null, 2));
 }
 
-readFiles(filenames);
+processLocaleMap().then(() => {
+  if (options.offset) {
+    const base = parseInt(options.offset, 10);
+    config.config.localeOffset = base;
+  }
+
+  if (options.prefix) {
+    config.config.localePrefix = options.prefix;
+  }
+
+  // const currentDir = process.cwd();
+  // const filename = path.resolve(currentDir, process.argv[2]);
+
+  const filenames = program.args.filter((filename) => {
+    // no less file, no locale file, no mock file
+    if (filename.match(/(less|css|sass)$/)) {
+      return false;
+    }
+
+    if (filename.match(/mock/)) {
+      return false;
+    }
+
+    if (filename.match(/__tests__/)) {
+      return false;
+    }
+
+    if (filename.match(/locale/)) {
+      return false;
+    }
+
+    if (filename.match(/\.d\.ts$/)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  console.log(filenames);
+
+  async function readFiles(filenames) {
+    for (let file of filenames) {
+      console.log(`processing ${file}`);
+
+      const result = fs.readFileSync(file, {
+        encoding: "utf-8",
+      });
+
+      await readFile(result, file, options).then(async ({ changed, code }) => {
+        if (changed) {
+          console.log(`${file} is formatted`);
+          fs.writeFile(
+            file,
+            prettier.format(code, {
+              printWidth: 100,
+              singleQuote: true,
+              tabWidth: 2,
+              parser: "typescript",
+            }),
+            (err) => {
+              if (err) {
+                console.error(err);
+              }
+            }
+          );
+        }
+      });
+    }
+    console.log(JSON.stringify(getLocaleMap(), null, 2));
+  }
+
+  readFiles(filenames);
+});
 // });
