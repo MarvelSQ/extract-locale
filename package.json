@@ -16,7 +16,11 @@
     "doc:dev": "vite --config docs/vite.config.js",
     "doc:build": "vite build --config docs/vite.config.js"
   },
-  "author": "",
+  "author": "MarvelSQ<sun1993hlj@hotmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarvelSQ/extract-local.git"
+  },
   "license": "ISC",
   "dependencies": {
     "@babel/generator": "^7.17.9",
