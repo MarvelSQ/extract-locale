@@ -11,7 +11,8 @@
     "README.md"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\"",
+    "test": "vitest",
+    "coverage": "vitest run --coverage",
     "build": "tsc --outDir lib",
     "doc:dev": "vite --config docs/vite.config.js",
     "doc:build": "vite build --config docs/vite.config.js"
@@ -33,11 +34,13 @@
     "chalk": "4",
     "commander": "^9.4.0",
     "inquirer": "^8.2.3",
+    "magic-string": "^0.30.0",
     "prettier": "^2.7.1"
   },
   "devDependencies": {
     "preact": "^10.13.0",
     "typescript": "^4.6.3",
-    "vite": "^4.1.4"
+    "vite": "^4.1.4",
+    "vitest": "^0.30.1"
   }
 }
