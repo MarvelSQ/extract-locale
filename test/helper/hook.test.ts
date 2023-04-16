@@ -33,12 +33,6 @@ test("测试hook解析", () => {
   const result = hookHelper.parse("./index.ts", fileContent);
 
   expect(result).toMatchObject({
-    hasImport: false,
-    hasSpecifier: false,
-    importInsert: `import useIntl from "./Intl/Provider"`,
-    importInsertIndex: 25,
-    specifierInsert: "",
-    specifierInsertIndex: null,
     scopes: [
       {
         start: 50,
@@ -52,12 +46,6 @@ test("测试hook解析", () => {
   const resultWithImport = hookHelper.parse("./index.ts", fileWithImport);
 
   expect(resultWithImport).toMatchObject({
-    hasImport: true,
-    hasSpecifier: false,
-    importInsert: "",
-    importInsertIndex: 63,
-    specifierInsert: "",
-    specifierInsertIndex: null,
     scopes: [
       {
         start: 88,

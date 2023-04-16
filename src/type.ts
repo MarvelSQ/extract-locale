@@ -38,6 +38,7 @@ export type FileProcesser<P> = {
   result: P;
   next: () => void;
   insert: (start: number, end: number, text: string) => void;
+  insertLine: (start: number, end: number, text: string) => void;
 };
 
 export type Plugin = {
