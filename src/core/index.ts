@@ -1,8 +1,7 @@
-import { FileProcesser, Sentence } from "../type";
+import { FileProcesser, Sentence, Plugin } from "../type";
 import MagicString from "magic-string";
 
 import { Matcher } from "../matcher";
-import { Plugin } from "../helper/hook";
 
 export function createReplacer({
   matcher,
@@ -86,11 +85,11 @@ export function createReplacer({
         plugin.defaultReplace(
           context,
           sentence,
-          plugin.beforeSentenceReplace(context, sentence)
+          plugin.beforeSentenceReplace?.(context, sentence)
         );
 
         if (processed) {
-          plugin.afterSentenceReplace(context, sentence);
+          plugin.afterSentenceReplace?.(context, sentence);
         }
       });
     });
