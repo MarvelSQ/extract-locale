@@ -2,6 +2,7 @@ import { test, expect } from "vitest";
 import { createReplacer } from "../src/core";
 import { createMatcher } from "../src/matcher";
 import { HookHelper } from "../src/helper/hook";
+import { SourceHelper } from "../src/helper/source";
 
 const baseFile = `import React from 'react';
 
@@ -16,11 +17,16 @@ export default function App() {
   );
 }
 
+const constants = {
+  sometext: '文案'
+}
+
 console.log('中文');
 `;
 
 const baseFileResult = `import React from 'react';
 import { useIntl } from "../Intl/index"
+import { formatMessage } from "../Intl/index"
 
 export default function App() {
 const formatMessage = useIntl();
@@ -32,6 +38,10 @@ const formatMessage = useIntl();
       <p>{formatMessage("LOCALE_TEXT_4", { part1: name })}</p>
     </div>
   );
+}
+
+const constants = {
+  sometext: formatMessage("LOCALE_TEXT_5")
 }
 
 console.log('中文');
@@ -65,6 +75,11 @@ test("transform base file", () => {
           result: "formatMessage",
         }
       ),
+      SourceHelper({
+        importSource: "./Intl/index",
+        name: "formatMessage",
+        isDefault: false,
+      }),
     ],
     returnPreview: true,
   });

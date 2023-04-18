@@ -141,6 +141,7 @@ export function SourceHelper(source: SourceParam) {
     }
 
     return {
+      matched: true,
       hasImport,
       /**
        * import语句插入位置
@@ -157,7 +158,7 @@ export function SourceHelper(source: SourceParam) {
       specifierInsertIndex,
       specifierInsert,
 
-      localImportName,
+      localImportName: localImportName || source.name,
     };
   }
 
