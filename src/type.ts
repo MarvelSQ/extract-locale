@@ -38,14 +38,21 @@ export type FileProcesser<P> = {
   result: P;
   next: () => void;
   insert: (start: number, end: number, text: string) => void;
-  insertLine: (start: number, end: number, text: string) => void;
 };
 
 export type Plugin = {
-  beforeSentenceReplace(sentence: Sentence): any;
-  afterSentenceReplace(sentence: Sentence): void;
-  defaultReplace(
-    context: FileProcesser<{ hookResult: string }>,
+  parse: (filePath: string, fileContent: string) => any;
+  beforeSentenceReplace?: (
+    context: FileProcesser<any>,
     sentence: Sentence
+  ) => any;
+  afterSentenceReplace?: (
+    context: FileProcesser<any>,
+    sentence: Sentence
+  ) => void;
+  defaultReplace(
+    context: FileProcesser<any>,
+    sentence: Sentence,
+    extra?: any
   ): void;
 };
