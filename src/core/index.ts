@@ -46,6 +46,8 @@ export function createReplacer({
       return acc;
     }, [] as { plugin: Plugin; result: any }[]);
 
+    const taskMap: Record<string, boolean> = {};
+
     sentences.forEach((sentence) => {
       let processed = false;
 
@@ -55,7 +57,13 @@ export function createReplacer({
         }
 
         const context: FileProcesser<any> = {
-          replace: (strs) => {
+          replace: (strs, uniqueTaskId) => {
+            if (uniqueTaskId) {
+              if (taskMap[uniqueTaskId]) {
+                return;
+              }
+              taskMap[uniqueTaskId] = true;
+            }
             if (sentence.parts.length) {
               const lastPartEnd = sentence.parts.reduce(
                 (start, part, index) => {
@@ -77,7 +85,13 @@ export function createReplacer({
           },
           result,
           next: () => {},
-          insert: (start, end, text) => {
+          insert: (start, end, text, uniqueTaskId) => {
+            if (uniqueTaskId) {
+              if (taskMap[uniqueTaskId]) {
+                return;
+              }
+              taskMap[uniqueTaskId] = true;
+            }
             magicStr.appendLeft(start, text);
           },
         };

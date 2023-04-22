@@ -168,11 +168,16 @@ export function SourceHelper(source: SourceParam) {
     context: FileProcesser<any>,
     result: ReturnType<typeof parseFile>
   ) {
-    const { hasImport, importInsert, importInsertIndex } = result;
+    const { hasImport, importInsert, importInsertIndex, localImportName } =
+      result;
 
     if (!hasImport) {
-      context.insert(importInsertIndex, importInsertIndex, `\n${importInsert}`);
-      result.hasImport = true;
+      context.insert(
+        importInsertIndex,
+        importInsertIndex,
+        `\n${importInsert}`,
+        `import-${localImportName}`
+      );
     }
   }
 
