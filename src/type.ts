@@ -34,10 +34,15 @@ export type FileProcesser<P> = {
   /**
    * 替换文字内容
    */
-  replace: (strs: string[]) => void;
+  replace: (strs: string[], uniqueTaskId?: string) => void;
   result: P;
   next: () => void;
-  insert: (start: number, end: number, text: string) => void;
+  insert: (
+    start: number,
+    end: number,
+    text: string,
+    uniqueTaskId?: string
+  ) => void;
 };
 
 export type Plugin = {

@@ -309,10 +309,6 @@ export function HookHelper(
       });
 
       if (macthedScope) {
-        if (macthedScope.result) {
-          return;
-        }
-
         const callStr = `const ${call.result} = ${defaultHookCall}(${
           call.params || ""
         });`;
@@ -321,18 +317,23 @@ export function HookHelper(
             macthedScope.start,
             macthedScope.start,
             `{${callStr}
-return `
+return `,
+            `hook-insert-block-start-${macthedScope.start}`
           );
-          context.insert(macthedScope.end, macthedScope.end, "}");
+          context.insert(
+            macthedScope.end,
+            macthedScope.end,
+            "}",
+            `hook-insert-block-end-${macthedScope.end}`
+          );
         } else if (!macthedScope.result) {
           context.insert(
             macthedScope.start,
             macthedScope.start,
-            `\n${callStr}`
+            `\n${callStr}`,
+            `hook-insert-block-start-${macthedScope.start}`
           );
         }
-
-        macthedScope.result = call.result;
       }
     },
   };
