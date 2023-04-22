@@ -45,6 +45,26 @@ export type FileProcesser<P> = {
   ) => void;
 };
 
+export type EffectTask =
+  | {
+      type: "replace";
+      texts: string[];
+      uniqueTaskId?: string;
+    }
+  | {
+      type: "insert";
+      start: number;
+      end: number;
+      text: string;
+      uniqueTaskId?: string;
+    };
+
+export type ReplaceTask = {
+  sentence: Sentence;
+  effects: EffectTask[];
+  postEffects: EffectTask[] | null;
+};
+
 export type Plugin = {
   parse: (
     filePath: string,

@@ -81,10 +81,9 @@ test("transform base file", () => {
         isDefault: false,
       }),
     ],
-    returnPreview: true,
   });
 
-  const result = replacer("./components/App.tsx", baseFile);
+  const result = replacer("./components/App.tsx", baseFile).toString();
 
   expect(result).toBe(baseFileResult);
 });
