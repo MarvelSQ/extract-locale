@@ -70,18 +70,23 @@ export function SourceHelper(source: SourceParam) {
             node.specifiers.some((specifier) => {
               if (t.isImportDefaultSpecifier(specifier)) {
                 localImportName = specifier.local.name;
+                hasSpecifier = true;
               }
             });
 
             if (!localImportName) {
               if (isNamespace) {
-                console.warn(
-                  `namespace specifier cannot be used with other specifier at the same time, found in ${filePath}`
-                );
                 localImportName = `${firstSpecifier.local.name}.default`;
+                hasSpecifier = true;
               } else {
-                specifierInsertIndex = node.specifiers[0].start as number;
-                specifierInsert = `${source.name}, `;
+                /**
+                 * "import|{xx}from 'xx'"
+                 *   ^^^^^^ +6
+                 */
+                const importStart = (node.start as number) + 6;
+
+                specifierInsertIndex = importStart;
+                specifierInsert = ` ${source.name},`;
               }
             }
           } else if (source.isNamespace) {
@@ -116,10 +121,8 @@ export function SourceHelper(source: SourceParam) {
 
             if (!localImportName && specifierInsertIndex === null) {
               if (isNamespace) {
-                console.warn(
-                  `namespace specifier cannot be used with other specifier at the same time, found in ${filePath}`
-                );
-                hasImport = false;
+                localImportName = `${firstSpecifier.local.name}.${source.name}`;
+                hasSpecifier = true;
               } else if (isDefault) {
                 specifierInsertIndex = firstSpecifier.end;
                 specifierInsert = `, { ${source.name} }`;
