@@ -46,7 +46,12 @@ export type FileProcesser<P> = {
 };
 
 export type Plugin = {
-  parse: (filePath: string, fileContent: string) => any;
+  parse: (
+    filePath: string,
+    fileContent: string
+  ) => {
+    matched: boolean;
+  };
   beforeSentenceReplace?: (
     context: FileProcesser<any>,
     sentence: Sentence
