@@ -1,23 +1,21 @@
-import { FileProcesser, Sentence, Plugin } from "../type";
-import MagicString from "magic-string";
+import { FileProcesser, Sentence, Plugin, ReplaceTask } from "../type";
 
 import { Matcher } from "../matcher";
+import { renderTasks } from "./render";
 
 export function createReplacer({
   matcher,
   assignee,
   plugins,
-  returnPreview,
 }: {
   matcher: Matcher;
   assignee: {
     getLocaleKey: (text: string | string[]) => string;
   };
   plugins: Plugin[];
-  returnPreview?: boolean;
 }) {
   return (filepath: string, fileContent: string) => {
-    const magicStr = new MagicString(fileContent);
+    const tasks: ReplaceTask[] = [];
 
     const matches = matcher.collect(fileContent);
 
@@ -46,8 +44,6 @@ export function createReplacer({
       return acc;
     }, [] as { plugin: Plugin; result: any }[]);
 
-    const taskMap: Record<string, boolean> = {};
-
     sentences.forEach((sentence) => {
       let processed = false;
 
@@ -56,43 +52,49 @@ export function createReplacer({
           return;
         }
 
+        const task: ReplaceTask = {
+          sentence,
+          effects: [],
+          postEffects: null,
+        };
+
         const context: FileProcesser<any> = {
           replace: (strs, uniqueTaskId) => {
-            if (uniqueTaskId) {
-              if (taskMap[uniqueTaskId]) {
-                return;
-              }
-              taskMap[uniqueTaskId] = true;
-            }
-            if (sentence.parts.length) {
-              const lastPartEnd = sentence.parts.reduce(
-                (start, part, index) => {
-                  magicStr.overwrite(start, part.start, strs[index]);
-                  return part.end;
-                },
-                sentence.start
-              );
-
-              magicStr.overwrite(
-                lastPartEnd,
-                sentence.end,
-                strs[strs.length - 1]
-              );
+            if (task.postEffects) {
+              task.postEffects.push({
+                type: "replace",
+                texts: strs,
+                uniqueTaskId,
+              });
             } else {
-              magicStr.overwrite(sentence.start, sentence.end, strs.join(""));
+              task.effects.push({
+                type: "replace",
+                texts: strs,
+                uniqueTaskId,
+              });
             }
             processed = true;
           },
           result,
           next: () => {},
           insert: (start, end, text, uniqueTaskId) => {
-            if (uniqueTaskId) {
-              if (taskMap[uniqueTaskId]) {
-                return;
-              }
-              taskMap[uniqueTaskId] = true;
+            if (task.postEffects) {
+              task.postEffects.push({
+                type: "insert",
+                start,
+                end,
+                text,
+                uniqueTaskId,
+              });
+            } else {
+              task.effects.push({
+                type: "insert",
+                start,
+                end,
+                text,
+                uniqueTaskId,
+              });
             }
-            magicStr.appendLeft(start, text);
           },
         };
 
@@ -103,13 +105,20 @@ export function createReplacer({
         );
 
         if (processed) {
+          // 设置 postEffects
+          task.postEffects = [];
           plugin.afterSentenceReplace?.(context, sentence);
+
+          tasks.push(task);
         }
       });
     });
 
-    if (returnPreview) {
-      return magicStr.toString();
-    }
+    return {
+      tasks,
+      toString() {
+        return renderTasks(tasks, fileContent);
+      },
+    };
   };
 }
