@@ -12,7 +12,7 @@ export default defineConfig({
   },
   plugins: [react()],
   define: {
-    "process.platform": "browser",
+    "process.platform": '"browser"',
     "process.env.BABEL_TYPES_8_BREAKING": false,
     "Buffer.isBuffer": "() => false",
   },
