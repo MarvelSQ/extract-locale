@@ -1,5 +1,3 @@
-import path from "node:path";
-
 /**
  * Get the relative path of the file to the import file
  * in the NodeJS environment
@@ -9,7 +7,24 @@ export function getNodeJSRelativePath(
   filePath: string,
   importFilePath: string
 ) {
-  const result = path.relative(path.dirname(filePath), importFilePath);
+  const currentPaths = filePath.split("/");
+  const importPaths = importFilePath.split("/");
+
+  const commonPaths = currentPaths.filter((path, index) => {
+    return path === importPaths[index];
+  });
+
+  const currentRelativePaths = currentPaths.slice(commonPaths.length);
+
+  const importRelativePaths = importPaths.slice(commonPaths.length);
+
+  // remove the file name
+  currentRelativePaths.pop();
+
+  const result = currentRelativePaths
+    .map(() => "..")
+    .concat(importRelativePaths)
+    .join("/");
 
   if (result.startsWith(".")) {
     return result;

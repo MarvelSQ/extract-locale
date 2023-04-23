@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   root: __dirname,
@@ -8,5 +9,14 @@ export default defineConfig({
   },
   build: {
     outDir: "../dist",
+  },
+  plugins: [react()],
+  define: {
+    process: {
+      env: {},
+    },
+    Buffer: {
+      isBuffer: () => false,
+    },
   },
 });

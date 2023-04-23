@@ -24,6 +24,7 @@
   },
   "license": "ISC",
   "dependencies": {
+    "@ant-design/icons": "^5.0.1",
     "@babel/generator": "^7.17.9",
     "@babel/parser": "^7.17.9",
     "@babel/traverse": "^7.17.9",
@@ -31,15 +32,21 @@
     "@types/babel__generator": "^7.6.4",
     "@types/babel__traverse": "^7.17.0",
     "@types/inquirer": "^8.2.1",
+    "antd": "^5.4.4",
     "chalk": "4",
     "commander": "^9.4.0",
     "inquirer": "^8.2.3",
     "magic-string": "^0.30.0",
-    "prettier": "^2.7.1"
+    "prettier": "^2.7.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@types/react": "^18.0.38",
+    "@types/react-dom": "^18.0.11",
+    "@types/wicg-file-system-access": "^2020.9.6",
+    "@vitejs/plugin-react": "^4.0.0",
     "@vitest/coverage-c8": "^0.30.1",
-    "preact": "^10.13.0",
     "typescript": "^4.6.3",
     "vite": "^4.1.4",
     "vitest": "^0.30.1"
