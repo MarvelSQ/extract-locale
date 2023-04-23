@@ -12,11 +12,7 @@ export default defineConfig({
   },
   plugins: [react()],
   define: {
-    process: {
-      env: {},
-    },
-    Buffer: {
-      isBuffer: () => false,
-    },
+    "process.env.BABEL_TYPES_8_BREAKING": false,
+    "Buffer.isBuffer": "() => false",
   },
 });
