@@ -1,7 +1,6 @@
 import { parse } from "@babel/parser";
 import traverse, { NodePath } from "@babel/traverse";
 import * as t from "@babel/types";
-import path from "node:path";
 import { FileProcesser, Sentence, SentenceType } from "../type";
 import { SourceHelper, SourceParam } from "./source";
 
