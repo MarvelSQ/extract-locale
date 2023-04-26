@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Layout, Space, Button, Typography, Badge, Tag } from "antd";
+import {
+  Layout,
+  Space,
+  Button,
+  Typography,
+  Badge,
+  Tag,
+  ConfigProvider,
+} from "antd";
 import "antd/dist/reset.css";
 import "./index.css";
 import { openExtractLocale } from "./filesystem/index";

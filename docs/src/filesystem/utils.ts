@@ -20,3 +20,12 @@ export function treeMap<T, R>(
   });
   return collect;
 }
+
+export function treeEach<T>(tree: T[], callback: (node: T) => void) {
+  tree.forEach((item) => {
+    callback(item);
+    if ((item as any).children) {
+      treeEach((item as any).children, callback);
+    }
+  });
+}

@@ -1,10 +1,12 @@
-import { Button, Card, Tree } from "antd";
+import { Button, Card, ConfigProvider, Input, Space, Tree } from "antd";
 import type { DataNode, DirectoryTreeProps } from "antd/es/tree";
 import { ExtractFile, ExtractDirectory } from "./type";
-import { treeMap } from "./utils";
+import { treeEach, treeMap } from "./utils";
 import { useMemo, useState } from "react";
 import { CloseSquareOutlined } from "@ant-design/icons";
 import Code from "./Code";
+import { minimatch } from "minimatch";
+import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
 
 const { DirectoryTree } = Tree;
 
@@ -38,11 +40,51 @@ function FileExplorer({
     }) as DataNode[];
   }, [fileTree]);
 
+  const [showMatch, setShowMatch] = useState(false);
+
+  const [matchGlob, setMatchGlob] = useState<string>("");
+
+  const matchResults = useMemo(() => {
+    const matched: DataNode[] = [];
+    const glob = matchGlob || "src/**/*.{ts,tsx,js,jsx}";
+    treeEach(treeData, (node) => {
+      if (node.key && minimatch(node.key as string, glob)) {
+        matched.push(node);
+      }
+    });
+    return matched;
+  }, [matchGlob, fileTree]);
+
   return (
-    <Card className="file-explorer-card" size="small">
-      <div className="file-explorer-card-content">
+    <div className="file-explorer-card">
+      <Input
+        value={matchGlob}
+        onChange={(event) => {
+          if (!showMatch) {
+            setShowMatch(true);
+          }
+          setMatchGlob(event.target.value);
+        }}
+        bordered={false}
+        placeholder="src/**/*.{ts,tsx,js,jsx}"
+        suffix={
+          showMatch ? (
+            <EyeTwoTone onClick={() => setShowMatch(false)} />
+          ) : (
+            <EyeInvisibleOutlined onClick={() => setShowMatch(true)} />
+          )
+        }
+      />
+      <div>Tools</div>
+      <ConfigProvider
+        theme={{
+          token: {
+            controlHeight: 40,
+          },
+        }}
+      >
         <DirectoryTree
-          treeData={treeData}
+          treeData={showMatch ? matchResults : treeData}
           onSelect={(keys) => {
             const key = keys[keys.length - 1] as string;
 
@@ -67,9 +109,29 @@ function FileExplorer({
             );
 
             if (file && file.type === "file") {
+              // 图片类型
+              const isPicture = file.name.match(/\.(png|jpe?g|gif|webp)$/i);
+
               file.handle
                 .getFile()
-                .then((res) => res.text())
+                .then((res) => {
+                  return new Promise<string>((resolve) => {
+                    isPicture
+                      ? res
+                          .arrayBuffer()
+                          .then((array) =>
+                            resolve(
+                              btoa(
+                                String.fromCharCode.apply(
+                                  null,
+                                  new Uint8Array(array) as any
+                                )
+                              )
+                            )
+                          )
+                      : resolve(res.text());
+                  });
+                })
                 .then((text) =>
                   setFile({
                     name: key,
@@ -79,25 +141,31 @@ function FileExplorer({
             }
           }}
         />
-        <div
-          className={`file-explorer-card-content-selected-file ${
-            file ? "has-content" : ""
-          }`}
-        >
-          {file?.name && (
-            <div className="selected-file-title">
-              {file.name}
-              <Button
-                icon={<CloseSquareOutlined />}
-                size="small"
-                onClick={() => setFile(null)}
-              />
-            </div>
-          )}
-          {file && <Code filename={file.name} filecontent={file.text} />}
-        </div>
+      </ConfigProvider>
+      <div
+        className={`file-explorer-card-content-selected-file ${
+          file ? "has-content" : ""
+        }`}
+      >
+        {file?.name && (
+          <div className="selected-file-title">
+            {file.name}
+            <Button
+              icon={<CloseSquareOutlined />}
+              size="small"
+              onClick={() => setFile(null)}
+            />
+          </div>
+        )}
+        {file && (
+          <Code
+            filename={file.name}
+            filecontent={file.text}
+            matched={matchResults.some((res) => res.key === file.name)}
+          />
+        )}
       </div>
-    </Card>
+    </div>
   );
 }
 
