@@ -57,6 +57,7 @@ function FileExplorer({
   return (
     <div className="file-explorer-card">
       <Input
+        size="large"
         value={matchGlob}
         onChange={(event) => {
           if (!showMatch) {
