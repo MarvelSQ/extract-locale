@@ -1,9 +1,8 @@
-import { Button, Card, ConfigProvider, Input, Space, Tree } from "antd";
+import { Button, Card, ConfigProvider, Input, Select, Space, Tree } from "antd";
 import type { DataNode, DirectoryTreeProps } from "antd/es/tree";
 import { ExtractFile, ExtractDirectory } from "./type";
 import { treeEach, treeMap } from "./utils";
 import { useMemo, useState } from "react";
-import { CloseSquareOutlined } from "@ant-design/icons";
 import Code from "./Code";
 import { minimatch } from "minimatch";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
@@ -75,7 +74,35 @@ function FileExplorer({
           )
         }
       />
-      <div>Tools</div>
+      <Space>
+        Text Matching:
+        <Input placeholder="please input RegExp" />
+        Inject Type:
+        <div>
+          <Select
+            mode="multiple"
+            value={["local", "hook"]}
+            options={[
+              {
+                label: "GLOBAL",
+                value: "global",
+              },
+              {
+                label: "LOCAL",
+                value: "local",
+              },
+              {
+                label: "HOOK",
+                value: "hook",
+              },
+              {
+                label: "COMPONENT",
+                value: "component",
+              },
+            ]}
+          />
+        </div>
+      </Space>
       <ConfigProvider
         theme={{
           token: {
@@ -147,18 +174,9 @@ function FileExplorer({
           file ? "has-content" : ""
         }`}
       >
-        {file?.name && (
-          <div className="selected-file-title">
-            {file.name}
-            <Button
-              icon={<CloseSquareOutlined />}
-              size="small"
-              onClick={() => setFile(null)}
-            />
-          </div>
-        )}
         {file && (
           <Code
+            onRemove={() => setFile(null)}
             filename={file.name}
             filecontent={file.text}
             matched={matchResults.some((res) => res.key === file.name)}

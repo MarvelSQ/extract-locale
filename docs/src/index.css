@@ -40,6 +40,7 @@
 }
 
 .file-explorer-card-content-selected-file {
+  position: relative;
   overflow: auto;
 }
 
