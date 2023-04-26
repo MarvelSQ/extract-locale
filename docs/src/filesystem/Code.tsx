@@ -1,13 +1,13 @@
 import React, { useContext, useMemo, useRef, useState } from "react";
 import { replacer as ReactReplacer } from "../../../src/preset/react";
-import { Badge, Button, Space } from "antd";
+import { Badge, Button, Menu, Space } from "antd";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
-import createElement, {
+import {
   createStyleObject,
   createClassNameString,
 } from "react-syntax-highlighter/dist/esm/create-element";
-import { CloseSquareOutlined } from "@ant-design/icons";
+import { CloseSquareOutlined, FileOutlined } from "@ant-design/icons";
 import { ReplaceTask } from "../../../src/type";
 
 type CodeBlock = {
@@ -164,7 +164,16 @@ function Code({
         display: "flex",
       }}
     >
-      {filename}
+      <Menu
+        activeKey="code"
+        items={[
+          {
+            label: <>{filename}</>,
+            key: "code",
+            icon: <FileOutlined />,
+          },
+        ]}
+      />
       <Button icon={<CloseSquareOutlined />} size="small" onClick={onRemove} />
       {task.result && (
         <Badge count={task.tasks.length}>
