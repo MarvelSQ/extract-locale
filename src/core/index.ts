@@ -111,8 +111,6 @@ export function createReplacer({
         };
 
         const context: FileProcesser<any> = {
-          localeKey: sentence.localeKey,
-          parts: sentence.parts.length ? "{}" : "",
           replace: (strs, uniqueTaskId) => {
             if (task.postEffects) {
               task.postEffects.push({

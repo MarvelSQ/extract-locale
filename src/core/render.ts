@@ -8,7 +8,12 @@ export function renderTasks(tasks: ReplaceTask[], content: string) {
   const taskMap = new Map<string, boolean>();
 
   tasks.forEach((task) => {
-    const { sentence, effects, postEffects, context } = task;
+    const { sentence, effects, postEffects, context: rawContext } = task;
+
+    const context = {
+      ...rawContext,
+      localeKey: sentence.localeKey,
+    };
     [...effects, ...(postEffects || [])].forEach((effect) => {
       const { uniqueTaskId } = effect;
 
