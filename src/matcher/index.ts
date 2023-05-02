@@ -4,9 +4,13 @@ import { PreMatch, SentenceType } from "../type";
 
 export type Matcher = ReturnType<typeof createMatcher>;
 
-export function createMatcher({ test }: { test: RegExp }) {
+export function createMatcher({
+  test,
+}: {
+  test: (text: string, filename: string) => boolean;
+}) {
   return {
-    collect(filecontent: string) {
+    collect(filename: string, filecontent: string) {
       const ast = parse(filecontent, {
         sourceType: "module",
         plugins: ["typescript", "jsx"],
@@ -23,7 +27,7 @@ export function createMatcher({ test }: { test: RegExp }) {
           }
           if (path.isStringLiteral()) {
             const value = path.node.value;
-            if (test.test(value)) {
+            if (test(value, filename)) {
               sentences.push({
                 text: value,
                 start: path.node.start as number,
@@ -38,7 +42,7 @@ export function createMatcher({ test }: { test: RegExp }) {
 
           if (path.isJSXText()) {
             const value = path.node.value;
-            if (test.test(value)) {
+            if (test(value, filename)) {
               sentences.push({
                 text: value,
                 start: path.node.start as number,
@@ -58,7 +62,7 @@ export function createMatcher({ test }: { test: RegExp }) {
               };
             });
 
-            if (value.some((v) => test.test(v.text))) {
+            if (value.some((v) => test(v.text, filename))) {
               sentences.push({
                 texts: value.map((v) => v.text),
                 start: path.node.start as number,

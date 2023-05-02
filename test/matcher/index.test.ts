@@ -3,9 +3,13 @@ import { createMatcher } from "../../src/matcher";
 import { SentenceType } from "../../src/type";
 
 test("匹配需替换的文本", () => {
-  const matchChinese = createMatcher({ test: /[\u4e00-\u9fa5]/ });
+  const matchChinese = createMatcher({
+    test: (value: string) => /[\u4e00-\u9fa5]/.test(value),
+  });
 
-  const sentences = matchChinese.collect(`
+  const sentences = matchChinese.collect(
+    "src/test.tsx",
+    `
     import React from 'react';
 
     export default function App() {
@@ -20,7 +24,8 @@ test("匹配需替换的文本", () => {
     }
 
     console.log('中文');
-  `);
+  `
+  );
 
   expect(sentences).toEqual([
     {

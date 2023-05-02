@@ -52,7 +52,7 @@ const dict = new Map<any, string>();
 test("transform base file", () => {
   const replacer = createReplacer({
     matcher: createMatcher({
-      test: /[\u4e00-\u9fa5]/,
+      test: (value) => /[\u4e00-\u9fa5]/.test(value),
     }),
     assignee: {
       getLocaleKey(text) {

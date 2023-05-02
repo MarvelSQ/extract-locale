@@ -17,7 +17,7 @@ export function createReplacer({
   return (filepath: string, fileContent: string) => {
     const tasks: ReplaceTask[] = [];
 
-    const matches = matcher.collect(fileContent);
+    const matches = matcher.collect(filepath, fileContent);
 
     const sentences = matches.map((m) => {
       return {
