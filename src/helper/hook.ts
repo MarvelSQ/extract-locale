@@ -2,7 +2,6 @@ import { parse } from "@babel/parser";
 import traverse, { NodePath } from "@babel/traverse";
 import * as t from "@babel/types";
 import { FileProcesser, Sentence, SentenceType } from "../type";
-import { SourceHelper, SourceParam } from "./source";
 
 function getFunctionName(path: NodePath<t.Function>) {
   if (t.isFunctionDeclaration(path.node)) {
@@ -160,25 +159,16 @@ function isFunctionIsReactComponent(
 /**
  * 根据hook解析依赖 与 scope
  */
-export function HookHelper(
-  source: SourceParam,
-  call: {
-    /**
-     * 调用名
-     * @example 'useIntl', 'intl.useHook'
-     */
-    name?: string;
-    result: string;
-    params?: string;
-  }
-) {
-  const sourceHelper = SourceHelper(source);
-
+export function HookHelper(call: {
+  /**
+   * 调用名
+   * @example 'useIntl', 'intl.useHook'
+   */
+  name: string;
+  result: string;
+  params?: string;
+}) {
   function parseFile(filePath: string, fileContent: string) {
-    const sourceResult = sourceHelper.parse(filePath, fileContent);
-
-    const { localImportName } = sourceResult;
-
     const ast = parse(fileContent, {
       sourceFilename: filePath,
       sourceType: "module",
@@ -192,23 +182,23 @@ export function HookHelper(
       isBlockBody: boolean;
     }[] = [];
 
-    const hookCall =
-      localImportName && call.name && call.name.includes(".")
-        ? call.name.replace(/^[^.]+/, localImportName)
-        : localImportName;
+    // const hookCall =
+    //   localImportName && call.name && call.name.includes(".")
+    //     ? call.name.replace(/^[^.]+/, localImportName)
+    //     : localImportName;
 
-    const defaultLocalImportName = localImportName || source.name;
+    // const defaultLocalImportName = localImportName || source.name;
 
-    const defaultHookCall =
-      defaultLocalImportName && call.name && !call.name.includes(".")
-        ? call.name.replace(/^[^.]+/, defaultLocalImportName)
-        : defaultLocalImportName;
+    // const defaultHookCall =
+    //   defaultLocalImportName && call.name && !call.name.includes(".")
+    //     ? call.name.replace(/^[^.]+/, defaultLocalImportName)
+    //     : defaultLocalImportName;
 
     traverse(ast, {
       Function(path) {
         const desc = isFunctionIsReactComponent(path, {
           hook: {
-            callName: hookCall,
+            callName: call.name,
             params: call.params,
             result: call.result,
           },
@@ -236,10 +226,7 @@ export function HookHelper(
 
     return {
       matched: scopes.length !== 0,
-      sourceHelper,
-      source: sourceResult,
       scopes,
-      defaultHookCall,
     };
   }
 
@@ -299,16 +286,14 @@ export function HookHelper(
       context.replace(replacement);
     },
     afterSentenceReplace(context: Context, sentence: Sentence) {
-      const { scopes, defaultHookCall, sourceHelper, source } = context.result;
-
-      sourceHelper.addImport(context, source);
+      const { scopes } = context.result;
 
       const macthedScope = scopes.find((scope) => {
         return sentence.start >= scope.start && sentence.end <= scope.end;
       });
 
       if (macthedScope) {
-        const callStr = `const ${call.result} = ${defaultHookCall}(${
+        const callStr = `const ${call.result} = ${call.name}(${
           call.params || ""
         });`;
         if (!macthedScope.isBlockBody) {

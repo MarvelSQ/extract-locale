@@ -3,6 +3,7 @@ import { createReplacer } from "../src/core";
 import { createMatcher } from "../src/matcher";
 import { HookHelper } from "../src/helper/hook";
 import { SourceHelper } from "../src/helper/source";
+import { SentenceType } from "../src/type";
 
 const baseFile = `import React from 'react';
 
@@ -64,22 +65,62 @@ test("transform base file", () => {
         return localeKey;
       },
     },
+    helpers: {
+      source: SourceHelper,
+      hook: HookHelper,
+    },
     plugins: [
-      HookHelper(
-        {
-          importSource: "./Intl/index",
-          name: "useIntl",
-          isDefault: false,
+      {
+        inject: [
+          {
+            type: "source",
+            option: {
+              importSource: "./Intl/index",
+              name: "useIntl",
+              isDefault: false,
+            },
+          },
+          {
+            type: "hook",
+            option: {
+              name: "{source.localImportName}",
+              result: "formatMessage",
+            },
+          },
+        ],
+        template: (context, sentence) => {
+          if (
+            [SentenceType.JSXText, SentenceType.JSXAttributeText].includes(
+              sentence.type as any
+            )
+          ) {
+            return '\\{{hook.hookResult}("{localeKey}"{parts?, {parts}})\\}';
+          }
+          return '{hook.hookResult}("{localeKey}"{parts?, {parts}})';
         },
-        {
-          result: "formatMessage",
-        }
-      ),
-      SourceHelper({
-        importSource: "./Intl/index",
-        name: "formatMessage",
-        isDefault: false,
-      }),
+      },
+      {
+        inject: [
+          {
+            type: "source",
+            option: {
+              importSource: "./Intl/index",
+              name: "formatMessage",
+              isDefault: false,
+            },
+          },
+        ],
+        template: (context, sentence) => {
+          if (
+            [SentenceType.JSXText, SentenceType.JSXAttributeText].includes(
+              sentence.type as any
+            )
+          ) {
+            return '\\{{source.localImportName}("{localeKey}"{parts?,\\{{parts}\\}})\\}';
+          }
+          return '{source.localImportName}("{localeKey}"{parts?,\\{{parts}\\}})';
+        },
+      },
     ],
   });
 
