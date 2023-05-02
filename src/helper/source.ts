@@ -139,7 +139,7 @@ export function SourceHelper(source: SourceParam) {
           ? source.name
           : source.isNamespace
           ? `* as ${source.name}`
-          : `{ ${source.name} }`
+          : `\\{ ${source.name} \\}`
       } from "${moduleImportPath}"`;
     }
 

@@ -60,12 +60,13 @@ export type EffectTask =
     };
 
 export type ReplaceTask = {
+  context: any;
   sentence: Sentence;
   effects: EffectTask[];
   postEffects: EffectTask[] | null;
 };
 
-export type Plugin = {
+export type Helper = {
   parse: (
     filePath: string,
     fileContent: string
@@ -85,4 +86,23 @@ export type Plugin = {
     sentence: Sentence,
     extra?: any
   ): void;
+};
+
+export type Plugin = {
+  inject: {
+    type: string;
+    name?: string;
+    option: any;
+  }[];
+  template:
+    | string
+    | ((context: string, sentence: Sentence) => string)
+    | {
+        types: string[];
+        template: string | ((context: string, sentence: Sentence) => string);
+      }
+    | Record<
+        SentenceType,
+        string | ((context: string, sentence: Sentence) => string)
+      >;
 };
