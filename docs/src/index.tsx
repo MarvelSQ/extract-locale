@@ -1,41 +1,31 @@
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  Layout,
-  Space,
-  Button,
-  Typography,
-  Badge,
-  Tag,
-  ConfigProvider,
-} from "antd";
+import { Space, Button, Typography, Badge } from "antd";
 import "antd/dist/reset.css";
 import "./index.css";
-import { openExtractLocale } from "./filesystem/index";
-import FileExplorer from "./filesystem/FileExplorer";
-import { ExtractDirectory, ExtractFile } from "./filesystem/type";
+import Entry from "./Task/Entry";
 
 function App() {
-  const [fileTree, setFileTree] = useState<
-    (ExtractFile | ExtractDirectory)[] | null
-  >(null);
+  const [type, setType] = useState<"react" | "demo" | null>(null);
 
   return (
     <>
       <Typography.Title>Extract Locale</Typography.Title>
-      <Badge color="green" count="react">
+      <Space>
         <Button
+          className="demo-btn"
           size="large"
-          onClick={() => {
-            openExtractLocale().then((fileTree) => {
-              setFileTree(fileTree);
-            });
-          }}
+          onClick={() => setType("demo")}
         >
-          open Directory
+          Demo
         </Button>
-      </Badge>
-      {fileTree && <FileExplorer fileTree={fileTree} />}
+        <Badge color="green" count="react">
+          <Button size="large" onClick={() => setType("react")}>
+            open Directory
+          </Button>
+        </Badge>
+      </Space>
+      {type && <Entry key={type} type={type} onClose={() => setType(null)} />}
     </>
   );
 }
