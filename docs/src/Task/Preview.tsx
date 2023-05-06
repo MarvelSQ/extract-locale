@@ -1,6 +1,6 @@
 import { EyeFilled, EyeOutlined } from "@ant-design/icons";
 import { Button } from "antd";
-import { diffWordsWithSpace } from "diff";
+import { diffWordsWithSpace, Change } from "diff";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ReplaceTask } from "../../../src/type";
 import { ParsedResultTask } from "../type";
@@ -60,7 +60,7 @@ function Preview({
 
       let offset = 0;
 
-      return changes
+      const adds = changes
         .filter((change) => !change.removed)
         .map((change) => {
           const changeWithRange = {
@@ -72,6 +72,30 @@ function Preview({
           return changeWithRange;
         })
         .filter((change) => change.added);
+
+      const merges = adds.reduce(
+        (acc, cur) => {
+          const last = acc[acc.length - 1];
+          if (last && last.end + 1 === cur.start) {
+            acc[acc.length - 1] = {
+              count: (last.count as number) + (cur.count as number),
+              value: `${last.value}${cur.value}`,
+              start: last.start,
+              end: cur.end,
+              added: true,
+            };
+          } else {
+            acc.push(cur);
+          }
+          return acc;
+        },
+        [] as (Change & {
+          start: number;
+          end: number;
+        })[]
+      );
+
+      return merges;
     }
     return [];
   }, [fileContent, fileResult]);
