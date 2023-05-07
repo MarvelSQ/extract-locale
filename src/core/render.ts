@@ -24,6 +24,14 @@ export function renderTasks(tasks: ReplaceTask[], content: string) {
         taskMap.set(uniqueTaskId, true);
       }
 
+      const renderContext = {
+        ...context,
+        isJSXText: sentence.type === SentenceType.JSXText,
+        isJSXAttributeText: sentence.type === SentenceType.JSXAttributeText,
+        isLiteral: sentence.type === SentenceType.Literal,
+        isTemplateLiteral: sentence.type === SentenceType.TemplateLiteral,
+      };
+
       if (effect.type === "replace") {
         const { texts } = effect;
         if (sentence.parts.length) {
@@ -34,12 +42,7 @@ export function renderTasks(tasks: ReplaceTask[], content: string) {
               .join(", ")} \\}`;
 
             const rendered = renderTemplate(texts[0], {
-              ...context,
-              isJSXText: sentence.type === SentenceType.JSXText,
-              isJSXAttributeText:
-                sentence.type === SentenceType.JSXAttributeText,
-              isLiteral: sentence.type === SentenceType.Literal,
-              isTemplateLiteral: sentence.type === SentenceType.TemplateLiteral,
+              ...renderContext,
               parts,
             });
 
@@ -73,11 +76,14 @@ export function renderTasks(tasks: ReplaceTask[], content: string) {
           magicStr.overwrite(
             sentence.start,
             sentence.end,
-            renderTemplate(texts.join(""), context)
+            renderTemplate(texts.join(""), renderContext)
           );
         }
       } else if (effect.type === "insert") {
-        magicStr.appendLeft(effect.start, renderTemplate(effect.text, context));
+        magicStr.appendLeft(
+          effect.start,
+          renderTemplate(effect.text, renderContext)
+        );
       }
     });
   });
