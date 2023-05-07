@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SimpleFile, loadFiles } from "./loadFiles";
-import { Button, List, Space, Tabs, Tag } from "antd";
+import { Button, List, Popconfirm, Space, Tabs, Tag } from "antd";
 import useModal from "antd/es/modal/useModal";
 import TaskForm from "./TaskForm";
 import Locales from "./Locales";
@@ -108,6 +108,12 @@ function Entry({
 
   const [saving, setSaving] = useState(false);
 
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSaved(false);
+  }, [results]);
+
   const handleSave = () => {
     setSaving(true);
     Promise.all(
@@ -125,6 +131,7 @@ function Entry({
     )
       .then(() => {
         alert("Saved!");
+        setSaved(true);
       })
       .catch((err) => {
         alert(err.message);
@@ -151,9 +158,22 @@ function Entry({
             Process Files
           </Button>
           {!!results.length && type === "react" && (
-            <Button loading={saving} onClick={handleSave}>
-              Save File Changes
-            </Button>
+            <Popconfirm
+              title="Saving Changes"
+              description={
+                <>
+                  Before saving, please make sure you have <br /> git or other
+                  version control system <br /> tracking your changes.
+                </>
+              }
+              onConfirm={handleSave}
+              okText="proceed"
+              cancelText="cancel"
+            >
+              <Button loading={saving} disabled={saved}>
+                Save File Changes
+              </Button>
+            </Popconfirm>
           )}
         </div>
       )}
