@@ -67,7 +67,7 @@ function Locales({
 
     results.forEach((result) => {
       result.tasks.forEach((task) => {
-        const { localeKey, start } = task.sentence;
+        const { localeKey, start, text, texts } = task.sentence;
 
         if (!localeKeyMap[localeKey]) {
           const files = [
@@ -81,7 +81,7 @@ function Locales({
 
           locales.push({
             localeKey,
-            localeValue: task.sentence.text,
+            localeValue: texts ? texts.join("{holder}") : text,
             sourceFiles: files,
           });
         } else {
