@@ -48,6 +48,7 @@ const FileSelector = ({
         targetKeys={targetKeys}
         onChange={handleChange}
         onSelectChange={handleSelect}
+        showSearch
         render={(item) => item.title}
       >
         {({ direction, onItemSelect, onItemSelectAll, selectedKeys }) => {
