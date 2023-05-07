@@ -95,7 +95,7 @@ export function withPreset({
           return dict.get(text) as string;
         }
         const localeKey = renderTemplate(localeKeyPattern, {
-          number: dict.size,
+          number: dict.size + 1,
         });
         dict.set(text, localeKey);
         return localeKey;
