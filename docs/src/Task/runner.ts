@@ -18,13 +18,17 @@ async function runFiles(config: typeof DefaultSettings, files: SimpleFile[]) {
   const results = Promise.all(
     files.map(async (file) => {
       const content = await file.content;
-      const { tasks, toString } = processFile(file.path, content);
+      try {
+        const { tasks, toString } = processFile(file.path, content);
 
-      return {
-        path: file.path,
-        tasks,
-        toString,
-      };
+        return {
+          path: file.path,
+          tasks,
+          toString,
+        };
+      } catch (err) {
+        throw new Error(`${err.message} in ${file.path}`);
+      }
     })
   );
 
@@ -43,10 +47,16 @@ export function useProcessFiles(files: SimpleFile[]) {
 
   const run = () => {
     setLoading(true);
-    runFiles({} as any, files).then((results) => {
-      setResults(results);
-      setLoading(false);
-    });
+    runFiles({} as any, files)
+      .then((results) => {
+        setResults(results);
+      })
+      .catch((err) => {
+        alert(err.message);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return {
