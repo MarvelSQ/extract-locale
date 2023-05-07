@@ -80,7 +80,7 @@ function Entry({
       {
         key: "3",
         label: "locales",
-        children: <Locales />,
+        children: <Locales results={results} />,
       },
     ];
   }, [files, results]);

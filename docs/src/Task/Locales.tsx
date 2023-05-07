@@ -1,5 +1,6 @@
 import { Table, Tag } from "antd";
-import React from "react";
+import React, { useMemo } from "react";
+import { ReplaceTask } from "../../../src/type";
 
 const data = [
   {
@@ -24,11 +25,18 @@ const columns = [
     title: "Source Files",
     dataIndex: "sourceFiles",
     key: "sourceFiles",
-    render(sourceFiles: string[]) {
+    render(
+      sourceFiles: {
+        filename: string;
+        start: number;
+      }[]
+    ) {
       return (
         <>
           {sourceFiles.map((file) => (
-            <Tag key={file}>{file}</Tag>
+            <Tag key={`${file.filename}-${file.start}`}>
+              {file.filename}:{file.start}
+            </Tag>
           ))}
         </>
       );
@@ -36,8 +44,72 @@ const columns = [
   },
 ];
 
-function Locales() {
-  return <Table dataSource={data} columns={columns} />;
+function Locales({
+  results,
+}: {
+  results: {
+    path: string;
+    tasks: ReplaceTask[];
+    toString: () => string;
+  }[];
+}) {
+  const localeData = useMemo(() => {
+    const locales: {
+      localeKey: string;
+      localeValue: string;
+      sourceFiles: {
+        filename: string;
+        start: number;
+      }[];
+    }[] = [];
+    const localeKeyMap: Record<string, { filename: string; start: number }[]> =
+      {};
+
+    results.forEach((result) => {
+      result.tasks.forEach((task) => {
+        const { localeKey, start } = task.sentence;
+
+        if (!localeKeyMap[localeKey]) {
+          const files = [
+            {
+              filename: result.path,
+              start: start,
+            },
+          ];
+
+          localeKeyMap[localeKey] = files;
+
+          locales.push({
+            localeKey,
+            localeValue: task.sentence.text,
+            sourceFiles: files,
+          });
+        } else {
+          localeKeyMap[localeKey].push({
+            filename: result.path,
+            start: start,
+          });
+        }
+      });
+    });
+
+    return locales;
+  }, [results]);
+
+  return (
+    <Table
+      sticky
+      scroll={{
+        x: true,
+        y: "calc(100vh - 315px)",
+      }}
+      pagination={{
+        pageSize: 30,
+      }}
+      dataSource={localeData}
+      columns={columns}
+    />
+  );
 }
 
 export default Locales;
