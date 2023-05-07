@@ -41,7 +41,7 @@ const ReactIntlImperativeAPI = {
     },
   ],
   template:
-    "{isJSXText?\\{}{isJSXAttributeText?\\{}{source.localImportName}.formatMessage({localeKey}{parts?, {parts}}){isJSXAttributeText?\\}}{isJSXText?\\}}",
+    '{isJSXText?\\{}{isJSXAttributeText?\\{}{source.localImportName}.formatMessage("{localeKey}"{parts?, {parts}}){isJSXAttributeText?\\}}{isJSXText?\\}}',
 };
 
 const ReactIntlFormattedMessage = {
@@ -58,7 +58,7 @@ const ReactIntlFormattedMessage = {
   ],
   template: {
     [SentenceType.JSXText]:
-      '<{source.localImportName} id="{localeKey}"{parts?, {parts}}/>',
+      '<{source.localImportName} id="{localeKey}"{parts? values={{parts}}}/>',
   },
 };
 
