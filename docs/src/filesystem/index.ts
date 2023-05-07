@@ -41,5 +41,10 @@ async function readAllFiles(handle: FileSystemDirectoryHandle) {
 export async function openExtractLocale() {
   const directoryHandle = await openDirectory();
 
-  return directoryHandle ? readAllFiles(directoryHandle) : null;
+  return directoryHandle
+    ? {
+        name: directoryHandle.name,
+        files: readAllFiles(directoryHandle),
+      }
+    : null;
 }

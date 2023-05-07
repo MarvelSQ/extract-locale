@@ -149,3 +149,26 @@ export function generateTree(
 
   return trees;
 }
+
+export function saveHistory(
+  directory: string,
+  changes: {
+    adds: string[];
+    removes: string[];
+  }
+) {
+  localStorage.setItem(directory, JSON.stringify(changes));
+}
+
+export function getHistory(directory: string) {
+  return JSON.parse(
+    localStorage.getItem(directory) ||
+      `{
+    "adds": [],
+    "removes": []
+  }`
+  ) as {
+    adds: string[];
+    removes: string[];
+  };
+}

@@ -50,7 +50,7 @@ function Entry({
     if (mountedRef.current) return;
     mountedRef.current = true;
 
-    loadFiles(type).then(async (files) => {
+    loadFiles(type).then(async ({ name, files }) => {
       let selectedFiles = files;
 
       if (type === "react") {
@@ -61,6 +61,7 @@ function Entry({
             className: "file-selector-modal",
             content: (
               <FileSelector
+                directory={name}
                 files={files.map((file) => ({
                   key: file.path,
                   title: file.path,
