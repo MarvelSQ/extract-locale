@@ -1,22 +1,20 @@
 import { ReplaceTask } from "../../../src/type";
-import { replacer as ReactReplacer } from "../../../src/preset/react";
+import { withPreset, DefaultSettings } from "../../../src/preset/react";
 import { SimpleFile } from "./loadFiles";
 import { useState } from "react";
 
-export function createConfig({}) {
-  return ReactReplacer;
-}
+async function runFiles(config: typeof DefaultSettings, files: SimpleFile[]) {
+  const replacer = withPreset(DefaultSettings);
 
-export function processFile(filename: string, filecontent: string) {
-  const { tasks, toString } = ReactReplacer(filename, filecontent);
+  function processFile(filename: string, filecontent: string) {
+    const { tasks, toString } = replacer(filename, filecontent);
 
-  return {
-    tasks,
-    toString,
-  };
-}
+    return {
+      tasks,
+      toString,
+    };
+  }
 
-async function runFiles(files: SimpleFile[]) {
   const results = Promise.all(
     files.map(async (file) => {
       const content = await file.content;
@@ -45,7 +43,7 @@ export function useProcessFiles(files: SimpleFile[]) {
 
   const run = () => {
     setLoading(true);
-    runFiles(files).then((results) => {
+    runFiles({} as any, files).then((results) => {
       setResults(results);
       setLoading(false);
     });

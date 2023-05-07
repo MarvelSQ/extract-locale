@@ -101,8 +101,10 @@ export type Plugin = {
         types: string[];
         template: string | ((context: string, sentence: Sentence) => string);
       }
-    | Record<
-        SentenceType,
-        string | ((context: string, sentence: Sentence) => string)
+    | Partial<
+        Record<
+          SentenceType,
+          string | ((context: string, sentence: Sentence) => string)
+        >
       >;
 };
