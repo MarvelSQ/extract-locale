@@ -26,6 +26,24 @@ function Entry({
 
   const [modal, holderContext] = useModal();
 
+  const [activeTab, setActiveTab] = useState<"task" | "files" | "locales">(
+    type === "demo" ? "files" : "task"
+  );
+
+  const [disabled, setDisabled] = useState(type === "demo");
+
+  useEffect(() => {
+    if (results.length) {
+      setDisabled(true);
+    }
+  }, [results]);
+
+  useEffect(() => {
+    if (type === "demo" && files.length && !results.length) {
+      run();
+    }
+  }, [type, files]);
+
   useEffect(() => {
     if (mountedRef.current) return;
     mountedRef.current = true;
@@ -68,17 +86,17 @@ function Entry({
   const tabs = useMemo(() => {
     return [
       {
-        key: "1",
+        key: "task",
         label: "Task",
         children: <TaskForm />,
       },
       {
-        key: "2",
+        key: "files",
         label: "files",
         children: <FileViewer files={files} results={results} />,
       },
       {
-        key: "3",
+        key: "locales",
         label: "locales",
         children: <Locales results={results} />,
       },
@@ -88,8 +106,21 @@ function Entry({
   return (
     <>
       {holderContext}
-      {!!files.length && <Tabs type="card" items={tabs} />}
-      {!!files.length && <Control loading={loading} onConfirm={() => run()} />}
+      {!!files.length && (
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab as any}
+          type="card"
+          items={tabs}
+        />
+      )}
+      {!!files.length && (
+        <Control
+          loading={loading}
+          onConfirm={() => run()}
+          disabled={disabled}
+        />
+      )}
     </>
   );
 }
