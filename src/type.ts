@@ -18,6 +18,7 @@ export type PreMatch = {
 };
 
 export type Sentence<E = any> = {
+  text: string;
   localeKey: string;
   parts: {
     name: string;
