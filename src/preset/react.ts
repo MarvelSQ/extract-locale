@@ -90,6 +90,9 @@ export function withPreset({
     }),
     assignee: {
       getLocaleKey(text, filePath) {
+        if (Array.isArray(text)) {
+          text = `[${text.join(",")}]`;
+        }
         if (dict.has(text)) {
           return dict.get(text) as string;
         }
