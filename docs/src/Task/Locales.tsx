@@ -1,5 +1,5 @@
-import { Table, Tag } from "antd";
-import React, { useMemo } from "react";
+import { Input, Space, Table, Tag } from "antd";
+import React, { useMemo, useState } from "react";
 import { ReplaceTask } from "../../../src/type";
 
 const data = [
@@ -7,40 +7,6 @@ const data = [
     localeKey: "LOCALE_KEY_1",
     localeValue: "Locale Value 1",
     sourceFiles: ["src/Task/Entry.tsx"],
-  },
-];
-
-const columns = [
-  {
-    title: "Locale Key",
-    dataIndex: "localeKey",
-    key: "localeKey",
-  },
-  {
-    title: "Locale Value",
-    dataIndex: "localeValue",
-    key: "localeValue",
-  },
-  {
-    title: "Source Files",
-    dataIndex: "sourceFiles",
-    key: "sourceFiles",
-    render(
-      sourceFiles: {
-        filename: string;
-        start: number;
-      }[]
-    ) {
-      return (
-        <>
-          {sourceFiles.map((file) => (
-            <Tag key={`${file.filename}-${file.start}`}>
-              {file.filename}:{file.start}
-            </Tag>
-          ))}
-        </>
-      );
-    },
   },
 ];
 
@@ -53,6 +19,8 @@ function Locales({
     toString: () => string;
   }[];
 }) {
+  const [search, setSearch] = useState("");
+
   const localeData = useMemo(() => {
     const locales: {
       localeKey: string;
@@ -96,19 +64,102 @@ function Locales({
     return locales;
   }, [results]);
 
+  const columns = useMemo(
+    () => [
+      {
+        title: "Locale Key",
+        dataIndex: "localeKey",
+        key: "localeKey",
+      },
+      {
+        width: 180,
+        title: "Locale Value",
+        dataIndex: "localeValue",
+        key: "localeValue",
+        filters: [
+          {
+            text: "Template",
+            value: "template",
+          },
+          {
+            text: "Text",
+            value: "text",
+          },
+        ],
+        onFilter: (value: string, record: any) => {
+          if (value === "template") {
+            return record.localeValue.includes("{holder}");
+          } else if (value === "text") {
+            return !record.localeValue.includes("{holder}");
+          }
+        },
+      },
+      {
+        title: "Source Files",
+        dataIndex: "sourceFiles",
+        key: "sourceFiles",
+        filters: results.map((result) => ({
+          text: result.path,
+          value: result.path,
+        })),
+        onFilter: (value: string, record: any) => {
+          return record.sourceFiles.some((file) => file.filename === value);
+        },
+        filterSearch: true,
+        render(
+          sourceFiles: {
+            filename: string;
+            start: number;
+          }[]
+        ) {
+          return (
+            <>
+              {sourceFiles.map((file) => (
+                <Tag key={`${file.filename}-${file.start}`}>
+                  {file.filename}:{file.start}
+                </Tag>
+              ))}
+            </>
+          );
+        },
+      },
+    ],
+    [results]
+  );
+
+  const filteredData = useMemo(() => {
+    if (!search) {
+      return localeData;
+    }
+    return localeData.filter((locale) => {
+      return (
+        locale.localeKey.includes(search) || locale.localeValue.includes(search)
+      );
+    });
+  }, [localeData, search]);
+
   return (
-    <Table
-      sticky
-      scroll={{
-        x: true,
-        y: "calc(100vh - 315px)",
-      }}
-      pagination={{
-        pageSize: 30,
-      }}
-      dataSource={localeData}
-      columns={columns}
-    />
+    <Space direction="vertical">
+      <Space>
+        <Input.Search
+          placeholder="Search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </Space>
+      <Table
+        sticky
+        scroll={{
+          x: true,
+          y: "calc(100vh - 370px)",
+        }}
+        pagination={{
+          pageSize: 30,
+        }}
+        dataSource={filteredData}
+        columns={columns}
+      />
+    </Space>
   );
 }
 
