@@ -82,6 +82,13 @@ export async function getFileContent(file: ExtractFile) {
   });
 }
 
+export function saveResult(file: ExtractFile, content: string) {
+  return file.handle.createWritable().then((writable) => {
+    writable.write(content);
+    writable.close();
+  });
+}
+
 const sortFile = (a, c) => {
   if (a.children && !c.children) {
     return -1;

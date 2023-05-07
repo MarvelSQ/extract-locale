@@ -1,9 +1,10 @@
 import { openExtractLocale } from "../filesystem";
-import { flatFileTree, getFileContent } from "../filesystem/utils";
+import { flatFileTree, getFileContent, saveResult } from "../filesystem/utils";
 
 export type SimpleFile = {
   path: string;
   content: string | Promise<string>;
+  save?: (content: string) => Promise<void>;
 };
 
 export async function loadFiles(type: string): Promise<SimpleFile[]> {
@@ -38,6 +39,9 @@ export async function loadFiles(type: string): Promise<SimpleFile[]> {
               path: file.name,
               get content() {
                 return getFileContent(file);
+              },
+              async save(content: string) {
+                await saveResult(file, content);
               },
             } as SimpleFile)
         );

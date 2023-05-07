@@ -1,11 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { SimpleFile, loadFiles } from "./loadFiles";
-import { List, Space, Tabs, Tag } from "antd";
+import { Button, List, Space, Tabs, Tag } from "antd";
 import useModal from "antd/es/modal/useModal";
 import TaskForm from "./TaskForm";
 import Locales from "./Locales";
 import FileSelector from "./FileSelector";
-import Control from "./Control";
 import { useProcessFiles } from "./runner";
 import FileViewer from "./FileViewer";
 
@@ -35,6 +34,9 @@ function Entry({
   useEffect(() => {
     if (results.length) {
       setDisabled(true);
+      if (activeTab === "task") {
+        setActiveTab("files");
+      }
     }
   }, [results]);
 
@@ -103,6 +105,34 @@ function Entry({
     ];
   }, [files, results]);
 
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = () => {
+    setSaving(true);
+    Promise.all(
+      results
+        .filter((result) => result.tasks.length)
+        .map((result) => {
+          return Promise.resolve()
+            .then(() => result.toString())
+            .then((content) => {
+              const file = files.find((file) => file.path === result.path);
+              if (!file) return;
+              return file.save?.(content);
+            });
+        })
+    )
+      .then(() => {
+        alert("Saved!");
+      })
+      .catch((err) => {
+        alert(err.message);
+      })
+      .finally(() => {
+        setSaving(false);
+      });
+  };
+
   return (
     <>
       {holderContext}
@@ -115,11 +145,16 @@ function Entry({
         />
       )}
       {!!files.length && (
-        <Control
-          loading={loading}
-          onConfirm={() => run()}
-          disabled={disabled}
-        />
+        <div className="control-bar">
+          <Button loading={loading} onClick={() => run()} disabled={disabled}>
+            Process Files
+          </Button>
+          {!!results.length && type === "react" && (
+            <Button loading={saving} onClick={handleSave}>
+              Save File Changes
+            </Button>
+          )}
+        </div>
       )}
     </>
   );
