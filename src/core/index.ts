@@ -11,7 +11,7 @@ export function createReplacer({
 }: {
   matcher: Matcher;
   assignee: {
-    getLocaleKey: (text: string | string[]) => string;
+    getLocaleKey: (text: string | string[], filePath: string) => string;
   };
   helpers: Record<string, (option: any) => Helper>;
   plugins: Plugin[];
@@ -58,7 +58,10 @@ export function createReplacer({
           ...p,
           name: `part${i + 1}`,
         })),
-        localeKey: assignee.getLocaleKey(m.text || (m.texts as string[])),
+        localeKey: assignee.getLocaleKey(
+          m.text || (m.texts as string[]),
+          filepath
+        ),
       } as Sentence;
     });
 

@@ -1,5 +1,5 @@
 import MagicString from "magic-string";
-import { ReplaceTask } from "../type";
+import { ReplaceTask, SentenceType } from "../type";
 import { renderTemplate } from "../utils/template";
 
 export function renderTasks(tasks: ReplaceTask[], content: string) {
@@ -35,6 +35,11 @@ export function renderTasks(tasks: ReplaceTask[], content: string) {
 
             const rendered = renderTemplate(texts[0], {
               ...context,
+              isJSXText: sentence.type === SentenceType.JSXText,
+              isJSXAttributeText:
+                sentence.type === SentenceType.JSXAttributeText,
+              isLiteral: sentence.type === SentenceType.Literal,
+              isTemplateLiteral: sentence.type === SentenceType.TemplateLiteral,
               parts,
             });
 
