@@ -5,8 +5,6 @@ import { createMatcher } from "../matcher";
 import { Plugin, SentenceType } from "../type";
 import { renderTemplate } from "../utils/template";
 
-const dict = new Map();
-
 const ReactIntlUseIntl = {
   name: "react-intl useIntl",
   inject: [
@@ -83,6 +81,7 @@ export function withPreset({
   localeKeyPattern: string;
   plugins: Plugin[];
 }) {
+  const dict = new Map();
   const matchRegExp = new RegExp(match);
 
   return createReplacer({
