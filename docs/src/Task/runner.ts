@@ -1,7 +1,8 @@
-import { ReplaceTask } from "../../../src/type";
-import { withPreset, DefaultSettings } from "../../../src/preset/react";
-import { SimpleFile } from "./loadFiles";
+import { notification } from "antd";
 import { useState } from "react";
+import { DefaultSettings, withPreset } from "../../../src/preset/react";
+import { ReplaceTask } from "../../../src/type";
+import { SimpleFile } from "./loadFiles";
 
 async function runFiles(config: typeof DefaultSettings, files: SimpleFile[]) {
   const replacer = withPreset(DefaultSettings);
@@ -26,8 +27,11 @@ async function runFiles(config: typeof DefaultSettings, files: SimpleFile[]) {
           tasks,
           toString,
         };
-      } catch (err) {
-        throw new Error(`${err.message} in ${file.path}`);
+      } catch (error) {
+        return {
+          path: file.path,
+          error,
+        };
       }
     })
   );
@@ -45,14 +49,38 @@ export function useProcessFiles(files: SimpleFile[]) {
     }[]
   >([]);
 
+  const [api] = notification.useNotification({
+    placement: "bottom",
+  });
+
   const run = () => {
     setLoading(true);
     runFiles({} as any, files)
       .then((results) => {
-        setResults(results);
-      })
-      .catch((err) => {
-        alert(err.message);
+        const successed: {
+          path: string;
+          tasks: ReplaceTask[];
+          toString: () => string;
+        }[] = [];
+        const failed = [];
+
+        results.forEach((e) => {
+          if ("error" in e) {
+            failed.push(e);
+          } else {
+            successed.push(e);
+          }
+        });
+
+        if (failed.length) {
+          notification.error({
+            message: `${failed.length} files failed`,
+            description: failed.map((e) => e.path).join("\n"),
+            placement: "bottom",
+          });
+        }
+
+        setResults(successed);
       })
       .finally(() => {
         setLoading(false);
