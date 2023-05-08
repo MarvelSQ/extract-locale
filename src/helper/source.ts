@@ -30,6 +30,8 @@ export type SourceParam = {
 export function SourceHelper(source: SourceParam) {
   const isRelativePath = source.importSource.startsWith("./");
 
+  const sourceHelperId = `sourceHelper_${source.name}_${source.isDefault}_${source.isNamespace}_${source.importSource}`;
+
   function parseFile(filePath: string, fileContent: string) {
     const moduleImportPath = isRelativePath
       ? getNodeJSRelativePath(filePath, source.importSource)
@@ -42,6 +44,9 @@ export function SourceHelper(source: SourceParam) {
     });
 
     let hasImport = false;
+    let hasDefaultImport = false;
+    let hasNamespaceImport = false;
+    let hasNormalImport = false;
     let hasSpecifier = false;
 
     let importInsertIndex = 0;
@@ -65,6 +70,16 @@ export function SourceHelper(source: SourceParam) {
 
           const isDefault = t.isImportDefaultSpecifier(firstSpecifier);
           const isNamespace = t.isImportNamespaceSpecifier(firstSpecifier);
+
+          node.specifiers.forEach((specifier) => {
+            if (t.isImportDefaultSpecifier(specifier)) {
+              hasDefaultImport = true;
+            } else if (t.isImportNamespaceSpecifier(specifier)) {
+              hasNamespaceImport = true;
+            } else if (t.isImportSpecifier(specifier)) {
+              hasNormalImport = true;
+            }
+          });
 
           if (source.isDefault) {
             node.specifiers.some((specifier) => {
@@ -146,6 +161,9 @@ export function SourceHelper(source: SourceParam) {
     return {
       matched: true,
       hasImport,
+      hasDefaultImport,
+      hasNamespaceImport,
+      hasNormalImport,
       /**
        * import语句插入位置
        */
@@ -162,6 +180,7 @@ export function SourceHelper(source: SourceParam) {
       specifierInsert,
 
       localImportName: localImportName || source.name,
+      moduleImportPath,
     };
   }
 
@@ -220,7 +239,140 @@ export function SourceHelper(source: SourceParam) {
     },
     addImport,
     afterSentenceReplace(context: Context) {
-      addImport(context, context.result);
+      context.file.context.imports =
+        context.file.context.imports ||
+        ([] as {
+          id: string;
+          source: SourceParam;
+          result: ReturnType<typeof parseFile>;
+        }[]);
+
+      if (context.result.hasSpecifier) {
+        return;
+      }
+
+      if (
+        context.file.context.imports.find((item) => item.id === sourceHelperId)
+      ) {
+        return;
+      }
+
+      context.file.context.imports.push({
+        id: sourceHelperId,
+        source,
+        result: context.result,
+      });
+
+      context.insert(0, 0, "", sourceHelperId);
+    },
+    postFile(context: Context) {
+      const { imports } = context.file.context;
+
+      // reset imports
+      context.file.context.imports = [];
+
+      const importMap = imports.reduce((map, item) => {
+        const importSource = item.source.importSource;
+        map[importSource] = map[importSource] || [];
+
+        if (!map[importSource].find((i) => i.id === item.id)) {
+          map[importSource].push(item);
+        }
+
+        return map;
+      }, {});
+
+      Object.entries(importMap).forEach(([importSource, specifiers]) => {
+        const {
+          hasImport,
+          hasNormalImport,
+          importInsertIndex,
+          moduleImportPath,
+        } = specifiers[0].result;
+        let defaultImport: {
+          sourceHelperId: string;
+          localImportName: string;
+        } | null = null;
+        const normalImports: {
+          sourceHelperId: string;
+          localImportName: string;
+        }[] = [];
+        let defaultInsertIndex = null;
+        let normalInsertIndex = null;
+
+        specifiers.forEach((item) => {
+          const { isDefault, isNamespace } = item.source;
+          const { localImportName, specifierInsertIndex } = item.result;
+
+          if (isDefault) {
+            defaultInsertIndex = specifierInsertIndex;
+            defaultImport = {
+              sourceHelperId: item.id,
+              localImportName,
+            };
+          } else if (isNamespace) {
+            // todo
+          } else {
+            normalInsertIndex = specifierInsertIndex;
+            normalImports.push({
+              sourceHelperId: item.id,
+              localImportName,
+            });
+          }
+        });
+
+        if (hasImport) {
+          const normalImportsStr = normalImports
+            .map((item) => {
+              return item.localImportName;
+            })
+            .join(", ");
+
+          context.push({
+            type: "condition",
+            tasks: [
+              defaultImport && {
+                type: "insert",
+                start: defaultInsertIndex,
+                end: defaultInsertIndex,
+                content: `${defaultImport.localImportName}, `,
+              },
+              normalImportsStr && {
+                type: "insert",
+                start: normalInsertIndex,
+                end: normalInsertIndex,
+                content: `${hasNormalImport ? "," : ", {"}${normalImportsStr}${
+                  hasNormalImport ? "" : "}"
+                }`,
+              },
+            ].filter(Boolean),
+          });
+        } else {
+          if (defaultImport || normalImports.length > 0) {
+            context.push({
+              type: "condition",
+              tasks: [
+                {
+                  type: "insert",
+                  start: importInsertIndex,
+                  end: importInsertIndex,
+                  content: `\nimport ${[
+                    defaultImport && defaultImport.localImportName,
+                    ...normalImports.map(
+                      (item, index) =>
+                        `${index === 0 ? "{ " : ""}${item.localImportName}${
+                          index === normalImports.length - 1 ? " }" : ""
+                        }`
+                    ),
+                  ]
+                    .filter(Boolean)
+                    .join(", ")} from "${moduleImportPath}"`,
+                },
+              ],
+            });
+          }
+        }
+      });
     },
   };
 }

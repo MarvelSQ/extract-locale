@@ -88,6 +88,7 @@ export type Helper = {
     sentence: Sentence,
     extra?: any
   ): void;
+  postFile?: (context: FileProcesser<any>) => void;
 };
 
 export type Plugin = {

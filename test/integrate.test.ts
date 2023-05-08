@@ -26,8 +26,7 @@ console.log('中文');
 `;
 
 const baseFileResult = `import React from 'react';
-import { useIntl } from "../Intl/index"
-import { formatMessage } from "../Intl/index"
+import { useIntl, formatMessage } from "../Intl/index"
 
 export default function App() {
 const formatMessage = useIntl();
