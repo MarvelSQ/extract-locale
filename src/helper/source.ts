@@ -266,7 +266,7 @@ export function SourceHelper(source: SourceParam) {
       context.insert(0, 0, "", sourceHelperId);
     },
     postFile(context: Context) {
-      const { imports } = context.file.context;
+      const { imports = [] } = context.file.context;
 
       // reset imports
       context.file.context.imports = [];
