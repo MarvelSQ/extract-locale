@@ -2,34 +2,17 @@ import MagicString from "magic-string";
 import { ReplaceTask, SentenceType } from "../type";
 import { renderTemplate } from "../utils/template";
 
-export function renderTasks(tasks: ReplaceTask[], content: string) {
+export function renderTasks(
+  tasks: ReplaceTask[],
+  fileTasks: {}[],
+  content: string
+) {
   const magicStr = new MagicString(content);
 
   const taskMap = new Map<string, boolean>();
 
   tasks.forEach((task) => {
-    const {
-      type,
-      tasks,
-      sentence,
-      effects,
-      postEffects,
-      context: rawContext,
-    } = task;
-
-    if (type === "condition") {
-      tasks.forEach((task) => {
-        const { type, start, content } = task;
-
-        if (type === "replace") {
-          magicStr.overwrite(start, start + content.length, content);
-        } else if (type === "insert") {
-          magicStr.appendLeft(start, content);
-        }
-      });
-
-      return;
-    }
+    const { sentence, effects, postEffects, context: rawContext } = task;
 
     const context = {
       ...rawContext,
@@ -105,6 +88,18 @@ export function renderTasks(tasks: ReplaceTask[], content: string) {
           effect.start,
           renderTemplate(effect.text, renderContext)
         );
+      }
+    });
+  });
+
+  fileTasks.forEach(({ tasks }) => {
+    tasks.forEach((task) => {
+      if (task.type === "repalce") {
+        const { start, end, content } = task;
+        magicStr.overwrite(start, end, content);
+      } else if (task.type === "insert") {
+        const { start, content } = task;
+        magicStr.appendLeft(start, content);
       }
     });
   });

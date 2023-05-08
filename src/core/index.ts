@@ -212,6 +212,8 @@ export function createReplacer({
       });
     });
 
+    const fileTasks = [];
+
     matchPlugins.forEach(({ inject, result }) => {
       inject.forEach(({ helper, name }) => {
         helper.postFile?.({
@@ -219,7 +221,7 @@ export function createReplacer({
             context: fileContext,
           },
           push(task: any) {
-            tasks.push(task);
+            fileTasks.push(task);
           },
         });
       });
@@ -227,8 +229,9 @@ export function createReplacer({
 
     return {
       tasks,
+      fileTasks,
       toString() {
-        return renderTasks(tasks, fileContent);
+        return renderTasks(tasks, fileTasks, fileContent);
       },
     };
   };
