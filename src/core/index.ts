@@ -49,6 +49,11 @@ export function createReplacer({
   return (filepath: string, fileContent: string) => {
     const tasks: ReplaceTask[] = [];
 
+    /**
+     * allow helper to store some context
+     */
+    const fileContext = {};
+
     const matches = matcher.collect(filepath, fileContent);
 
     const sentences = matches.map((m) => {
@@ -190,6 +195,9 @@ export function createReplacer({
           inject.forEach(({ helper, name }) => {
             helper.afterSentenceReplace?.(
               {
+                file: {
+                  context: fileContext,
+                },
                 ...tempContext,
                 result: tempContext[name],
               },
@@ -201,6 +209,19 @@ export function createReplacer({
 
           tasks.push(task);
         }
+      });
+    });
+
+    matchPlugins.forEach(({ inject, result }) => {
+      inject.forEach(({ helper, name }) => {
+        helper.postFile?.({
+          file: {
+            context: fileContext,
+          },
+          push(task: any) {
+            tasks.push(task);
+          },
+        });
       });
     });
 

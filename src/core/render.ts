@@ -8,7 +8,28 @@ export function renderTasks(tasks: ReplaceTask[], content: string) {
   const taskMap = new Map<string, boolean>();
 
   tasks.forEach((task) => {
-    const { sentence, effects, postEffects, context: rawContext } = task;
+    const {
+      type,
+      tasks,
+      sentence,
+      effects,
+      postEffects,
+      context: rawContext,
+    } = task;
+
+    if (type === "condition") {
+      tasks.forEach((task) => {
+        const { type, start, content } = task;
+
+        if (type === "replace") {
+          magicStr.overwrite(start, start + content.length, content);
+        } else if (type === "insert") {
+          magicStr.appendLeft(start, content);
+        }
+      });
+
+      return;
+    }
 
     const context = {
       ...rawContext,
