@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { SimpleFile } from "./loadFiles";
-import { ReplaceTask } from "../../../src/type";
+import { LocaleTask } from "../../../src/type";
 import { Button, List, Space, Tag } from "antd";
 import Preview from "./Preview";
 
@@ -11,7 +11,7 @@ function FileViewer({
   files: SimpleFile[];
   results: {
     path: string;
-    tasks: ReplaceTask[];
+    tasks: LocaleTask[];
   }[];
 }) {
   const [selectFile, setSelectFile] = useState<string | null>(null);

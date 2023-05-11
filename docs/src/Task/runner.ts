@@ -1,11 +1,18 @@
 import { notification } from "antd";
 import { useState } from "react";
-import { DefaultSettings, withPreset } from "../../../src/preset/react";
-import { ReplaceTask } from "../../../src/type";
+import { DefaultSettings, withReact } from "../../../src/preset/react";
+import { LocaleTask } from "../../../src/type";
 import { SimpleFile } from "./loadFiles";
 
-async function runFiles(config: typeof DefaultSettings, files: SimpleFile[]) {
-  const replacer = withPreset(DefaultSettings);
+async function runFiles(config: typeof DefaultSettings, files: SimpleFile[]): Promise<Array<{
+  path: string,
+  error: unknown;
+} | {
+  path: string;
+  tasks: LocaleTask[];
+  toString(): string;
+}>> {
+  const replacer = withReact(DefaultSettings);
 
   function processFile(filename: string, filecontent: string) {
     const { tasks, toString } = replacer(filename, filecontent);
@@ -44,7 +51,7 @@ export function useProcessFiles(files: SimpleFile[]) {
   const [results, setResults] = useState<
     {
       path: string;
-      tasks: ReplaceTask[];
+      tasks: LocaleTask[];
       toString: () => string;
     }[]
   >([]);
@@ -59,10 +66,13 @@ export function useProcessFiles(files: SimpleFile[]) {
       .then((results) => {
         const successed: {
           path: string;
-          tasks: ReplaceTask[];
+          tasks: LocaleTask[];
           toString: () => string;
         }[] = [];
-        const failed = [];
+        const failed: {
+          path: string;
+          error: unknown;
+        }[] = [];
 
         results.forEach((e) => {
           if ("error" in e) {
