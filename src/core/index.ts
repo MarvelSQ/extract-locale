@@ -1,4 +1,4 @@
-import { FileProcesser, Sentence, Plugin, ReplaceTask, FileTask, HelperResult } from "../type";
+import { Plugin, FileTask, HelperResult, LocaleTask, FileHandle, TextMatch } from "../type";
 
 import { Matcher } from "../matcher";
 import { renderTasks } from "./render";
@@ -24,14 +24,14 @@ export function createReplacer({
           helper: helpers[type](option),
         };
       }),
-      template: (context: any, sentence: Sentence) => {
+      template: (context: any, sentence: TextMatch) => {
         if (typeof p.template === "string") {
           return p.template;
         }
         if (typeof p.template === "function") {
           return p.template(context, sentence);
         }
-        if ("types" in p.template) {
+        if ("types" in p.template && Array.isArray(p.template.types)) {
           if (p.template.types.includes(sentence.type)) {
             const temp = p.template.template;
             return typeof temp === "function" ? temp(context, sentence) : temp;
@@ -40,14 +40,14 @@ export function createReplacer({
         }
         if (sentence.type in p.template) {
           const temp = p.template[sentence.type as keyof typeof p.template];
-          return typeof temp === "function" ? temp(context, sentence) : temp;
+          return typeof temp === "function" ? temp(context, sentence) : temp as string;
         }
       },
     };
   });
 
   return (filepath: string, fileContent: string) => {
-    const tasks: ReplaceTask[] = [];
+    const tasks: LocaleTask[] = [];
 
     /**
      * allow helper to store some context
@@ -55,20 +55,6 @@ export function createReplacer({
     const fileContext: Record<string, any> = {};
 
     const matches = matcher.collect(filepath, fileContent);
-
-    const sentences = matches.map((m) => {
-      return {
-        ...m,
-        parts: m.parts.map((p, i) => ({
-          ...p,
-          name: `part${i + 1}`,
-        })),
-        localeKey: assignee.getLocaleKey(
-          m.text || (m.texts as string[]),
-          filepath
-        ),
-      } as Sentence;
-    });
 
     const matchPlugins = finalPlugins.reduce(
       (acc, plugin) => {
@@ -90,20 +76,20 @@ export function createReplacer({
             inject: plugin.inject,
             result: context,
             template: plugin.template,
-          },
+          }
         ];
       },
-      [] as Array<{
+      [] as {
         inject: {
           name: string;
           helper: HelperResult<any>;
         }[];
         result: any;
-        template: (context: any, sentence: Sentence) => string | undefined;
-      }>
+        template: (context: any, sentence: TextMatch) => string | undefined;
+      }[]
     );
 
-    sentences.forEach((sentence) => {
+    matches.forEach((sentence) => {
       let processed = false;
 
       matchPlugins.forEach(({ inject, result, template }) => {
@@ -111,55 +97,55 @@ export function createReplacer({
           return;
         }
 
-        const task: ReplaceTask = {
+        const task: LocaleTask = {
+          match: sentence,
+          localeKey: assignee.getLocaleKey(
+            sentence.text,
+            filepath
+          ),
           context: {},
-          sentence,
+          extra: {},
           effects: [],
           postEffects: null,
         };
 
-        const context: FileProcesser<any> = {
-          replace: (strs, uniqueTaskId) => {
+        const handle: FileHandle = {
+          replace: (start, end, text, uniqueTaskId) => {
+            const effection = {
+              type: "replace" as "replace",
+              start,
+              end,
+              text,
+              uniqueTaskId,
+            };
             if (task.postEffects) {
-              task.postEffects.push({
-                type: "replace",
-                texts: strs,
-                uniqueTaskId,
-              });
+              task.postEffects.push(effection);
             } else {
-              task.effects.push({
-                type: "replace",
-                texts: strs,
-                uniqueTaskId,
-              });
+              task.effects.push(effection);
             }
           },
-          result,
-          next: () => { },
           insert: (start, end, text, uniqueTaskId) => {
+            const effection = {
+              type: "insert" as "insert",
+              start,
+              end,
+              text,
+              uniqueTaskId,
+            };
             if (task.postEffects) {
-              task.postEffects.push({
-                type: "insert",
-                start,
-                end,
-                text,
-                uniqueTaskId,
-              });
+              task.postEffects.push(effection);
             } else {
-              task.effects.push({
-                type: "insert",
-                start,
-                end,
-                text,
-                uniqueTaskId,
-              });
+              task.effects.push(effection);
             }
           },
         };
 
         const tempContext = {
-          ...context,
-          ...result,
+          fileContext,
+          ...handle,
+          context: {
+            ...result
+          },
         };
 
         for (const { name, helper } of inject) {
@@ -167,7 +153,7 @@ export function createReplacer({
             const beforeContext = helper.beforeSentenceReplace?.(
               {
                 ...tempContext,
-                result: tempContext[name],
+                result: tempContext.context[name],
               },
               sentence
             );
@@ -177,8 +163,8 @@ export function createReplacer({
               return;
             }
 
-            tempContext[name] = {
-              ...tempContext[name],
+            tempContext.context[name] = {
+              ...tempContext.context[name],
               ...beforeContext,
             };
           }
@@ -188,22 +174,21 @@ export function createReplacer({
         if (templateStr) {
           processed = true;
 
-          context.replace([templateStr]);
+          handle.replace(sentence.start, sentence.end,templateStr);
 
           task.postEffects = [];
 
           inject.forEach(({ helper, name }) => {
             helper.afterSentenceReplace?.(
               {
-                fileContext: fileContext,
                 ...tempContext,
-                result: tempContext[name],
+                result: tempContext.context[name],
               },
               sentence
             );
           });
 
-          task.context = tempContext;
+          task.context = tempContext.context;
 
           tasks.push(task);
         }
