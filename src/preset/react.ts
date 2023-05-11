@@ -72,7 +72,7 @@ export const DefaultSettings = {
   ],
 };
 
-export function withPreset({
+export function withReact({
   match,
   localeKeyPattern,
   plugins,

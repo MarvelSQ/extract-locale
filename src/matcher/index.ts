@@ -1,6 +1,6 @@
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
-import { PreMatch, SentenceType } from "../type";
+import { SentenceType, TextMatch } from "../type";
 
 export type Matcher = ReturnType<typeof createMatcher>;
 
@@ -16,7 +16,7 @@ export function createMatcher({
         plugins: ["typescript", "jsx"],
       });
 
-      const sentences: PreMatch[] = [];
+      const sentences: TextMatch[] = [];
 
       traverse(ast, {
         enter(path) {
@@ -64,12 +64,13 @@ export function createMatcher({
 
             if (value.some((v) => test(v.text, filename))) {
               sentences.push({
-                texts: value.map((v) => v.text),
+                text: value.map((v) => v.text),
                 start: path.node.start as number,
                 end: path.node.end as number,
                 type: SentenceType.TemplateLiteral,
-                parts: path.node.expressions.map((e) => {
+                parts: path.node.expressions.map((e, i) => {
                   return {
+                    name:  `part${i + 1}`,
                     start: e.start as number,
                     end: e.end as number,
                   };

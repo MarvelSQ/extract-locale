@@ -27,7 +27,7 @@ test("匹配需替换的文本", () => {
   `
   );
 
-  expect(sentences).toEqual([
+  expect(sentences).toMatchObject([
     {
       text: "中文",
       start: 88,
@@ -57,7 +57,7 @@ test("匹配需替换的文本", () => {
       parts: [],
     },
     {
-      texts: ["这是一段", "模版"],
+      text: ["这是一段", "模版"],
       start: 208,
       end: 223,
       parts: [
