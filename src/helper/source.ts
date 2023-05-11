@@ -1,6 +1,6 @@
 import { parse } from "@babel/parser";
 import * as t from "@babel/types";
-import { BaseTask, FileProcesser, HelperResult, Sentence, SentenceType } from "../type";
+import { Effection, HelperResult } from "../type";
 import { getNodeJSRelativePath } from "../utils/path";
 
 export type SourceParam = {
@@ -189,58 +189,8 @@ export function SourceHelper(source: SourceParam): HelperResult<ReturnType<typeo
     };
   }
 
-  type Context = FileProcesser<ReturnType<typeof parseFile>>;
-
-  function addImport(
-    context: FileProcesser<any>,
-    result: ReturnType<typeof parseFile>
-  ) {
-    const { hasImport, importInsert, importInsertIndex, localImportName } =
-      result;
-
-    if (!hasImport) {
-      context.insert(
-        importInsertIndex,
-        importInsertIndex,
-        `\n${importInsert}`,
-        `import-${localImportName}`
-      );
-    }
-  }
-
   return {
     parse: parseFile,
-    // defaultReplace(context, sentence) {
-    //   let replacement: string[] = [];
-
-    //   const { localImportName } = context.result;
-
-    //   if (sentence.parts.length === 0) {
-    //     replacement = [`${localImportName}("${sentence.localeKey}")`];
-    //   } else {
-    //     replacement = [
-    //       ...sentence.parts.map((part, index) => {
-    //         return `${index === 0
-    //             ? `${localImportName}("${sentence.localeKey}", { `
-    //             : ", "
-    //           }${part.name}: `;
-    //       }),
-    //       " })",
-    //     ];
-    //   }
-    //   // add `{}` for raw text in jsx
-    //   if (
-    //     [SentenceType.JSXText, SentenceType.JSXAttributeText].includes(
-    //       sentence.type as any
-    //     )
-    //   ) {
-    //     replacement[0] = `{${replacement[0]}`;
-    //     replacement[replacement.length - 1] = `${replacement[replacement.length - 1]
-    //       }}`;
-    //   }
-    //   context.replace(replacement);
-    // },
-    // addImport,
     afterSentenceReplace(context) {
       context.fileContext.imports =
         context.fileContext.imports ||
@@ -347,7 +297,7 @@ export function SourceHelper(source: SourceParam): HelperResult<ReturnType<typeo
                 text: `${hasNormalImport ? "," : ", {"}${normalImportsStr}${hasNormalImport ? "" : "}"
                   }`,
               },
-            ].filter(Boolean) as BaseTask[],
+            ].filter(Boolean) as Effection[],
           });
         } else {
           if (defaultImport || normalImports.length > 0) {
