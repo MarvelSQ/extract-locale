@@ -1,10 +1,10 @@
 import MagicString from "magic-string";
-import { ReplaceTask, SentenceType } from "../type";
+import { FileTask, LocaleTask, SentenceType } from "../type";
 import { renderTemplate } from "../utils/template";
 
 export function renderTasks(
-  tasks: ReplaceTask[],
-  fileTasks: {}[],
+  tasks: LocaleTask[],
+  fileTasks: FileTask[],
   content: string
 ) {
   const magicStr = new MagicString(content);
@@ -12,11 +12,11 @@ export function renderTasks(
   const taskMap = new Map<string, boolean>();
 
   tasks.forEach((task) => {
-    const { sentence, effects, postEffects, context: rawContext } = task;
+    const { match, localeKey, effects, postEffects, context: rawContext } = task;
 
     const context = {
       ...rawContext,
-      localeKey: sentence.localeKey,
+      localeKey,
     };
     [...effects, ...(postEffects || [])].forEach((effect) => {
       const { uniqueTaskId } = effect;
@@ -30,57 +30,40 @@ export function renderTasks(
 
       const renderContext = {
         ...context,
-        isJSXText: sentence.type === SentenceType.JSXText,
-        isJSXAttributeText: sentence.type === SentenceType.JSXAttributeText,
-        isLiteral: sentence.type === SentenceType.Literal,
-        isTemplateLiteral: sentence.type === SentenceType.TemplateLiteral,
+        isJSXText: match.type === SentenceType.JSXText,
+        isJSXAttributeText: match.type === SentenceType.JSXAttributeText,
+        isLiteral: match.type === SentenceType.Literal,
+        isTemplateLiteral: match.type === SentenceType.TemplateLiteral,
       };
 
       if (effect.type === "replace") {
-        const { texts } = effect;
-        if (sentence.parts.length) {
-          if (texts.length === 1) {
-            const partRandom = `------${Math.random()}-----`;
-            const parts = `\\{ ${sentence.parts
-              .map((e) => `${e.name}: ${partRandom}`)
-              .join(", ")} \\}`;
+        const { text } = effect;
+        if (match.parts.length) {
+          const partRandom = `------${Math.random()}-----`;
+          const parts = `\\{ ${match.parts
+            .map((e) => `${e.name}: ${partRandom}`)
+            .join(", ")} \\}`;
 
-            const rendered = renderTemplate(texts[0], {
-              ...renderContext,
-              parts,
-            });
+          const rendered = renderTemplate(text, {
+            ...renderContext,
+            parts,
+          });
 
-            const splited = rendered.split(partRandom);
+          const splited = rendered.split(partRandom);
 
-            splited.reduce((start, text, index) => {
-              const part = sentence.parts[index];
+          splited.reduce((start, text, index) => {
+            const part = match.parts[index];
 
-              const end = part ? part.start : sentence.end;
+            const end = part ? part.start : match.end;
 
-              magicStr.overwrite(start, end, text);
-              return part?.end;
-            }, sentence.start);
-          } else {
-            const lastPartEnd = sentence.parts.reduce((start, part, index) => {
-              magicStr.overwrite(
-                start,
-                part.start,
-                renderTemplate(texts[index], context)
-              );
-              return part.end;
-            }, sentence.start);
-
-            magicStr.overwrite(
-              lastPartEnd,
-              sentence.end,
-              renderTemplate(texts[texts.length - 1], context)
-            );
-          }
+            magicStr.overwrite(start, end, text);
+            return part?.end;
+          }, match.start);
         } else {
           magicStr.overwrite(
-            sentence.start,
-            sentence.end,
-            renderTemplate(texts.join(""), renderContext)
+            match.start,
+            match.end,
+            renderTemplate(text, renderContext)
           );
         }
       } else if (effect.type === "insert") {
@@ -94,12 +77,12 @@ export function renderTasks(
 
   fileTasks.forEach(({ tasks }) => {
     tasks.forEach((task) => {
-      if (task.type === "repalce") {
-        const { start, end, content } = task;
-        magicStr.overwrite(start, end, content);
+      if (task.type === "replace") {
+        const { start, end, text } = task;
+        magicStr.overwrite(start, end, text);
       } else if (task.type === "insert") {
-        const { start, content } = task;
-        magicStr.appendLeft(start, content);
+        const { start, text } = task;
+        magicStr.appendLeft(start, text);
       }
     });
   });

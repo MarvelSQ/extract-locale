@@ -2,20 +2,20 @@ import { EyeFilled, EyeOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 import { diffWordsWithSpace, Change } from "diff";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { ReplaceTask } from "../../../src/type";
+import { LocaleTask } from "../../../src/type";
 import { ParsedResultTask } from "../type";
 import Code, { RenderCodeBlockType } from "./Code";
 import { SimpleFile } from "./loadFiles";
 
-function getMatchTask(tasks: ReplaceTask[], start: number, end: number) {
+function getMatchTask(tasks: LocaleTask[], start: number, end: number) {
   if (!tasks) return false;
   const index = tasks.findIndex(
-    (task) => task.sentence.start <= start && task.sentence.end >= end
+    (task) => task.match.start <= start && task.match.end >= end
   );
   if (index >= 0) {
     return {
       index,
-      last: tasks[index].sentence.end === end,
+      last: tasks[index].match.end === end,
     };
   }
 }

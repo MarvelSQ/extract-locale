@@ -1,6 +1,6 @@
 import { Input, Space, Table, Tag } from "antd";
 import React, { useMemo, useState } from "react";
-import { ReplaceTask } from "../../../src/type";
+import { LocaleTask } from "../../../src/type";
 
 const data = [
   {
@@ -15,7 +15,7 @@ function Locales({
 }: {
   results: {
     path: string;
-    tasks: ReplaceTask[];
+    tasks: LocaleTask[];
     toString: () => string;
   }[];
 }) {
@@ -35,7 +35,7 @@ function Locales({
 
     results.forEach((result) => {
       result.tasks.forEach((task) => {
-        const { localeKey, start, text, texts } = task.sentence;
+        const { localeKey, match: { start, text } } = task;
 
         if (!localeKeyMap[localeKey]) {
           const files = [
@@ -49,7 +49,7 @@ function Locales({
 
           locales.push({
             localeKey,
-            localeValue: texts ? texts.join("{holder}") : text,
+            localeValue: Array.isArray(text) ? text.join("{holder}") : text,
             sourceFiles: files,
           });
         } else {
@@ -103,7 +103,7 @@ function Locales({
           value: result.path,
         })),
         onFilter: (value: string, record: any) => {
-          return record.sourceFiles.some((file) => file.filename === value);
+          return record.sourceFiles.some((file: any) => file.filename === value);
         },
         filterSearch: true,
         render(

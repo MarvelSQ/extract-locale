@@ -1,6 +1,6 @@
 import { parse } from "@babel/parser";
 import * as t from "@babel/types";
-import { FileProcesser, Sentence, SentenceType } from "../type";
+import { Effection, HelperResult } from "../type";
 import { getNodeJSRelativePath } from "../utils/path";
 
 export type SourceParam = {
@@ -27,7 +27,13 @@ export type SourceParam = {
 /**
  * parse file content & resolve importSource
  */
-export function SourceHelper(source: SourceParam) {
+export function SourceHelper(source: SourceParam): HelperResult<ReturnType<typeof parseFile>, void, {
+  imports: {
+    id: string,
+    source: SourceParam,
+    result: ReturnType<typeof parseFile>
+  }[]
+}> {
   const isRelativePath = source.importSource.startsWith("./");
 
   const sourceHelperId = `sourceHelper_${source.name}_${source.isDefault}_${source.isNamespace}_${source.importSource}`;
@@ -139,7 +145,7 @@ export function SourceHelper(source: SourceParam) {
                 localImportName = `${firstSpecifier.local.name}.${source.name}`;
                 hasSpecifier = true;
               } else if (isDefault) {
-                specifierInsertIndex = firstSpecifier.end;
+                specifierInsertIndex = firstSpecifier.end as number;
                 specifierInsert = `, { ${source.name} }`;
               }
             }
@@ -149,13 +155,12 @@ export function SourceHelper(source: SourceParam) {
     });
 
     if (!hasImport) {
-      importInsert = `import ${
-        source.isDefault
-          ? source.name
-          : source.isNamespace
+      importInsert = `import ${source.isDefault
+        ? source.name
+        : source.isNamespace
           ? `* as ${source.name}`
           : `\\{ ${source.name} \\}`
-      } from "${moduleImportPath}"`;
+        } from "${moduleImportPath}"`;
     }
 
     return {
@@ -184,63 +189,11 @@ export function SourceHelper(source: SourceParam) {
     };
   }
 
-  type Context = FileProcesser<ReturnType<typeof parseFile>>;
-
-  function addImport(
-    context: FileProcesser<any>,
-    result: ReturnType<typeof parseFile>
-  ) {
-    const { hasImport, importInsert, importInsertIndex, localImportName } =
-      result;
-
-    if (!hasImport) {
-      context.insert(
-        importInsertIndex,
-        importInsertIndex,
-        `\n${importInsert}`,
-        `import-${localImportName}`
-      );
-    }
-  }
-
   return {
     parse: parseFile,
-    defaultReplace(context: Context, sentence: Sentence) {
-      let replacement: string[] = [];
-
-      const { localImportName } = context.result;
-
-      if (sentence.parts.length === 0) {
-        replacement = [`${localImportName}("${sentence.localeKey}")`];
-      } else {
-        replacement = [
-          ...sentence.parts.map((part, index) => {
-            return `${
-              index === 0
-                ? `${localImportName}("${sentence.localeKey}", { `
-                : ", "
-            }${part.name}: `;
-          }),
-          " })",
-        ];
-      }
-      // add `{}` for raw text in jsx
-      if (
-        [SentenceType.JSXText, SentenceType.JSXAttributeText].includes(
-          sentence.type as any
-        )
-      ) {
-        replacement[0] = `{${replacement[0]}`;
-        replacement[replacement.length - 1] = `${
-          replacement[replacement.length - 1]
-        }}`;
-      }
-      context.replace(replacement);
-    },
-    addImport,
-    afterSentenceReplace(context: Context) {
-      context.file.context.imports =
-        context.file.context.imports ||
+    afterSentenceReplace(context) {
+      context.fileContext.imports =
+        context.fileContext.imports ||
         ([] as {
           id: string;
           source: SourceParam;
@@ -252,12 +205,12 @@ export function SourceHelper(source: SourceParam) {
       }
 
       if (
-        context.file.context.imports.find((item) => item.id === sourceHelperId)
+        context.fileContext.imports.find((item) => item.id === sourceHelperId)
       ) {
         return;
       }
 
-      context.file.context.imports.push({
+      context.fileContext.imports.push({
         id: sourceHelperId,
         source,
         result: context.result,
@@ -265,11 +218,11 @@ export function SourceHelper(source: SourceParam) {
 
       context.insert(0, 0, "", sourceHelperId);
     },
-    postFile(context: Context) {
-      const { imports = [] } = context.file.context;
+    postFile(context) {
+      const { imports = [] } = context.fileContext;
 
       // reset imports
-      context.file.context.imports = [];
+      context.fileContext.imports = [];
 
       const importMap = imports.reduce((map, item) => {
         const importSource = item.source.importSource;
@@ -280,25 +233,25 @@ export function SourceHelper(source: SourceParam) {
         }
 
         return map;
-      }, {});
+      }, {} as Record<string, typeof imports>);
 
       Object.entries(importMap).forEach(([importSource, specifiers]) => {
+
+        type ImportType = {
+          sourceHelperId: string;
+          localImportName: string;
+        }
+
         const {
           hasImport,
           hasNormalImport,
           importInsertIndex,
           moduleImportPath,
         } = specifiers[0].result;
-        let defaultImport: {
-          sourceHelperId: string;
-          localImportName: string;
-        } | null = null;
-        const normalImports: {
-          sourceHelperId: string;
-          localImportName: string;
-        }[] = [];
-        let defaultInsertIndex = null;
-        let normalInsertIndex = null;
+        let defaultImport: ImportType | null = null;
+        const normalImports: ImportType[] = [];
+        let defaultInsertIndex: number | null = null;
+        let normalInsertIndex: number | null = null;
 
         specifiers.forEach((item) => {
           const { isDefault, isNamespace } = item.source;
@@ -309,7 +262,7 @@ export function SourceHelper(source: SourceParam) {
             defaultImport = {
               sourceHelperId: item.id,
               localImportName,
-            };
+            } as ImportType;
           } else if (isNamespace) {
             // todo
           } else {
@@ -333,19 +286,18 @@ export function SourceHelper(source: SourceParam) {
             tasks: [
               defaultImport && {
                 type: "insert",
-                start: defaultInsertIndex,
-                end: defaultInsertIndex,
-                content: `${defaultImport.localImportName}, `,
+                start: defaultInsertIndex as unknown as number,
+                end: defaultInsertIndex as unknown as number,
+                text: `${(defaultImport as ImportType).localImportName}, `,
               },
               normalImportsStr && {
                 type: "insert",
-                start: normalInsertIndex,
-                end: normalInsertIndex,
-                content: `${hasNormalImport ? "," : ", {"}${normalImportsStr}${
-                  hasNormalImport ? "" : "}"
-                }`,
+                start: normalInsertIndex as unknown as number,
+                end: normalInsertIndex as unknown as number,
+                text: `${hasNormalImport ? "," : ", {"}${normalImportsStr}${hasNormalImport ? "" : "}"
+                  }`,
               },
-            ].filter(Boolean),
+            ].filter(Boolean) as Effection[],
           });
         } else {
           if (defaultImport || normalImports.length > 0) {
@@ -356,12 +308,11 @@ export function SourceHelper(source: SourceParam) {
                   type: "insert",
                   start: importInsertIndex,
                   end: importInsertIndex,
-                  content: `\nimport ${[
-                    defaultImport && defaultImport.localImportName,
+                  text: `\nimport ${[
+                    defaultImport && (defaultImport as ImportType).localImportName,
                     ...normalImports.map(
                       (item, index) =>
-                        `${index === 0 ? "{ " : ""}${item.localImportName}${
-                          index === normalImports.length - 1 ? " }" : ""
+                        `${index === 0 ? "{ " : ""}${item.localImportName}${index === normalImports.length - 1 ? " }" : ""
                         }`
                     ),
                   ]

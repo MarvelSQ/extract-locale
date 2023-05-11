@@ -5,91 +5,57 @@ export const enum SentenceType {
   JSXAttributeText = "JSXAttributeText",
 }
 
-export type PreMatch = {
-  text?: string;
-  texts?: string[];
+export type TextMatch = {
+  text: string | string[];
   start: number;
   end: number;
-  type: SentenceType;
-  parts: {
-    start: number;
-    end: number;
-  }[];
-};
-
-export type Sentence<E = any> = {
-  text: string;
-  texts: string[];
-  localeKey: string;
+  type: SentenceType | string;
   parts: {
     name: string;
     start: number;
     end: number;
   }[];
-  type: SentenceType.JSXAttributeText | string;
-  extra: E;
+}
+
+export type Effection = {
+  type: "replace" | "insert";
+  uniqueTaskId?: string;
   start: number;
   end: number;
-};
+  text: string;
+}
 
-export type FileProcesser<P> = {
+export type LocaleTask = {
+  match: TextMatch;
+  localeKey: string;
+  extra: any;
+  effects: Effection[];
+  postEffects: Effection[] | null;
+  context: Record<string, any>;
+}
+
+export type FileHandle = {
   /**
    * 替换文字内容
    */
-  replace: (strs: string[], uniqueTaskId?: string) => void;
-  result: P;
-  next: () => void;
+  replace: (start: number, end: number, text: string, uniqueTaskId?: string) => void;
+  /**
+   * 插入文字内容
+   */
   insert: (
     start: number,
     end: number,
     text: string,
     uniqueTaskId?: string
   ) => void;
-};
+}
 
-export type EffectTask =
-  | {
-      type: "replace";
-      texts: string[];
-      uniqueTaskId?: string;
-    }
-  | {
-      type: "insert";
-      start: number;
-      end: number;
-      text: string;
-      uniqueTaskId?: string;
-    };
+export type BaseTemplate = string | ((context: Record<string, any>, sentence: TextMatch) => string);
 
-export type ReplaceTask = {
-  context: any;
-  sentence: Sentence;
-  effects: EffectTask[];
-  postEffects: EffectTask[] | null;
-};
-
-export type Helper = {
-  parse: (
-    filePath: string,
-    fileContent: string
-  ) => {
-    matched: boolean;
-  };
-  beforeSentenceReplace?: (
-    context: FileProcesser<any>,
-    sentence: Sentence
-  ) => any;
-  afterSentenceReplace?: (
-    context: FileProcesser<any>,
-    sentence: Sentence
-  ) => void;
-  defaultReplace(
-    context: FileProcesser<any>,
-    sentence: Sentence,
-    extra?: any
-  ): void;
-  postFile?: (context: FileProcesser<any>) => void;
-};
+export type Template = BaseTemplate | {
+  types: (SentenceType | string)[];
+  template: BaseTemplate;
+} | Partial<Record<SentenceType | string, BaseTemplate>>;
 
 export type Plugin = {
   inject: {
@@ -97,17 +63,29 @@ export type Plugin = {
     name?: string;
     option: any;
   }[];
-  template:
-    | string
-    | ((context: string, sentence: Sentence) => string)
-    | {
-        types: string[];
-        template: string | ((context: string, sentence: Sentence) => string);
-      }
-    | Partial<
-        Record<
-          SentenceType,
-          string | ((context: string, sentence: Sentence) => string)
-        >
-      >;
+  template: Template;
 };
+
+export type FileTask = {
+  type: string;
+  tasks: Effection[]
+}
+
+type ReplacerContext<E, FC = Record<string, any>> = {
+  result: E;
+  fileContext: FC
+};
+
+type PostFileContext<FC> = {
+  fileContext: FC;
+  push(task: FileTask): void;
+}
+
+export type HelperResult<ParseResult extends {
+  matched: boolean;
+}, PreResult = void | {}, FC = Record<string, any>> = {
+  parse(filepath: string, filecontent: string): ParseResult;
+  beforeSentenceReplace?(context: ReplacerContext<ParseResult, FC>, sentence: TextMatch): PreResult | void;
+  afterSentenceReplace?(context: FileHandle & ReplacerContext<ParseResult & PreResult, FC>, sentence: TextMatch): void;
+  postFile?(context: PostFileContext<FC>): void;
+}
