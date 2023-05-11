@@ -1,4 +1,4 @@
-import { FileProcesser, Sentence, Plugin, ReplaceTask, Helper } from "../type";
+import { FileProcesser, Sentence, Plugin, ReplaceTask, FileTask, HelperResult } from "../type";
 
 import { Matcher } from "../matcher";
 import { renderTasks } from "./render";
@@ -13,7 +13,7 @@ export function createReplacer({
   assignee: {
     getLocaleKey: (text: string | string[], filePath: string) => string;
   };
-  helpers: Record<string, (option: any) => Helper>;
+  helpers: Record<string, (option: any) => HelperResult<any>>;
   plugins: Plugin[];
 }) {
   const finalPlugins = plugins.map((p) => {
@@ -52,7 +52,7 @@ export function createReplacer({
     /**
      * allow helper to store some context
      */
-    const fileContext = {};
+    const fileContext: Record<string, any> = {};
 
     const matches = matcher.collect(filepath, fileContent);
 
@@ -96,7 +96,7 @@ export function createReplacer({
       [] as Array<{
         inject: {
           name: string;
-          helper: Helper;
+          helper: HelperResult<any>;
         }[];
         result: any;
         template: (context: any, sentence: Sentence) => string | undefined;
@@ -135,7 +135,7 @@ export function createReplacer({
             }
           },
           result,
-          next: () => {},
+          next: () => { },
           insert: (start, end, text, uniqueTaskId) => {
             if (task.postEffects) {
               task.postEffects.push({
@@ -195,9 +195,7 @@ export function createReplacer({
           inject.forEach(({ helper, name }) => {
             helper.afterSentenceReplace?.(
               {
-                file: {
-                  context: fileContext,
-                },
+                fileContext: fileContext,
                 ...tempContext,
                 result: tempContext[name],
               },
@@ -212,14 +210,12 @@ export function createReplacer({
       });
     });
 
-    const fileTasks = [];
+    const fileTasks: FileTask[] = [];
 
     matchPlugins.forEach(({ inject, result }) => {
       inject.forEach(({ helper, name }) => {
         helper.postFile?.({
-          file: {
-            context: fileContext,
-          },
+          fileContext,
           push(task: any) {
             fileTasks.push(task);
           },
