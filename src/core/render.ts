@@ -1,10 +1,10 @@
 import MagicString from "magic-string";
-import { ReplaceTask, SentenceType } from "../type";
+import { FileTask, ReplaceTask, SentenceType } from "../type";
 import { renderTemplate } from "../utils/template";
 
 export function renderTasks(
   tasks: ReplaceTask[],
-  fileTasks: {}[],
+  fileTasks: FileTask[],
   content: string
 ) {
   const magicStr = new MagicString(content);
@@ -94,12 +94,12 @@ export function renderTasks(
 
   fileTasks.forEach(({ tasks }) => {
     tasks.forEach((task) => {
-      if (task.type === "repalce") {
-        const { start, end, content } = task;
+      if (task.type === "replace") {
+        const { start, end, text } = task;
         magicStr.overwrite(start, end, content);
       } else if (task.type === "insert") {
-        const { start, content } = task;
-        magicStr.appendLeft(start, content);
+        const { start, text } = task;
+        magicStr.appendLeft(start, text);
       }
     });
   });

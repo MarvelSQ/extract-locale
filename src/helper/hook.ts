@@ -1,7 +1,7 @@
 import { parse } from "@babel/parser";
 import traverse, { NodePath } from "@babel/traverse";
 import * as t from "@babel/types";
-import { FileProcesser, Sentence, SentenceType } from "../type";
+import { HelperResult } from "../type";
 
 function getFunctionName(path: NodePath<t.Function>) {
   if (t.isFunctionDeclaration(path.node)) {
@@ -165,9 +165,14 @@ export function HookHelper(call: {
    * @example 'useIntl', 'intl.useHook'
    */
   name: string;
+  /**
+   * 返回值
+   */
   result: string;
   params?: string;
-}) {
+}): HelperResult<ReturnType<typeof parseFile>, {
+  hookResult: string;
+}> {
   function parseFile(filePath: string, fileContent: string) {
     const ast = parse(fileContent, {
       sourceFilename: filePath,
@@ -230,11 +235,9 @@ export function HookHelper(call: {
     };
   }
 
-  type Context = FileProcesser<ReturnType<typeof parseFile>>;
-
   return {
     parse: parseFile,
-    beforeSentenceReplace(context: Context, sentence: Sentence) {
+    beforeSentenceReplace(context, sentence) {
       const { scopes } = context.result;
       const macthedScope = scopes.find((scope) => {
         return sentence.start >= scope.start && sentence.end <= scope.end;
@@ -245,47 +248,7 @@ export function HookHelper(call: {
         };
       }
     },
-    defaultReplace(
-      context: Context,
-      sentence: Sentence,
-      extra?: {
-        hookResult: string;
-      }
-    ) {
-      let replacement: string[] = [];
-
-      if (!extra) {
-        return;
-      }
-
-      if (sentence.parts.length === 0) {
-        replacement = [`${extra.hookResult}("${sentence.localeKey}")`];
-      } else {
-        replacement = [
-          ...sentence.parts.map((part, index) => {
-            return `${
-              index === 0
-                ? `${extra.hookResult}("${sentence.localeKey}", { `
-                : ", "
-            }${part.name}: `;
-          }),
-          " })",
-        ];
-      }
-      // add `{}` for raw text in jsx
-      if (
-        [SentenceType.JSXText, SentenceType.JSXAttributeText].includes(
-          sentence.type as any
-        )
-      ) {
-        replacement[0] = `{${replacement[0]}`;
-        replacement[replacement.length - 1] = `${
-          replacement[replacement.length - 1]
-        }}`;
-      }
-      context.replace(replacement);
-    },
-    afterSentenceReplace(context: Context, sentence: Sentence) {
+    afterSentenceReplace(context, sentence) {
       const { scopes } = context.result;
 
       const macthedScope = scopes.find((scope) => {
@@ -293,9 +256,8 @@ export function HookHelper(call: {
       });
 
       if (macthedScope) {
-        const callStr = `const ${call.result} = ${call.name}(${
-          call.params || ""
-        });`;
+        const callStr = `const ${call.result} = ${call.name}(${call.params || ""
+          });`;
         if (!macthedScope.isBlockBody) {
           context.insert(
             macthedScope.start,
