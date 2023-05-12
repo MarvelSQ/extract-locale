@@ -3,7 +3,10 @@
   "compilerOptions": {
     "moduleResolution": "node",
     "module": "ESNext",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["./src/**/*.tsx", "./src/**/*.ts"]
 }

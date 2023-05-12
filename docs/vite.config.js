@@ -1,12 +1,16 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import Svgr from "vite-plugin-svgr";
 
 export default defineConfig({
   root: __dirname,
   build: {
     sourcemap: true,
     outDir: "../dist",
+  },
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
   },
   plugins: [
     {
