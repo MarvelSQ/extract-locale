@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { BellRing, Check, Folder, FolderPlus, PlusSquare } from "lucide-react";
+import Preview from "./preview";
 
 const tags = Array.from({ length: 50 }).map(
   (_, i, a) => `v1.2.0-beta.${a.length - i}`
@@ -81,15 +82,19 @@ export function Task() {
       </div>
       <div className="container flex flex-col items-start py-8">
         <Tabs defaultValue="detail" className="flex flex-col self-stretch">
-          <TabsList className="grid grid-cols-2 w-[200px]">
+          <TabsList className="grid grid-cols-3 w-[300px]">
             <TabsTrigger value="detail">Detail</TabsTrigger>
             <TabsTrigger value="files">File List</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
           <TabsContent className="self-stretch" value="detail">
             <Detail />
           </TabsContent>
           <TabsContent value="files">
             <Files />
+          </TabsContent>
+          <TabsContent value="preview">
+            <Preview />
           </TabsContent>
         </Tabs>
         {/* <div className="flex flex-row gap-8 items-stretch">

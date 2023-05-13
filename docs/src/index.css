@@ -1,4 +1,8 @@
-@import "./Task/index.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* @import "./Task/index.css";
 
 #root {
   height: 100%;
@@ -68,14 +72,14 @@
   border: 1px solid #d9d9d9;
 }
 
-/* .file-explorer-card-content {
+.file-explorer-card-content {
   display: flex;
   flex-direction: row;
   height: 100%;
   width: 100%;
   align-items: stretch;
   justify-content: center;
-} */
+}
 
 .file-explorer-card > .ant-tree {
   overflow: auto;
@@ -92,7 +96,7 @@
 
 .task-matched {
   background-color: rgba(0, 0, 0, 0.3);
-}
+} */
 
 /* .selected-file-title {
   position: sticky;

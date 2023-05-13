@@ -1,6 +1,9 @@
 import React, { useCallback, useMemo } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import {
+  oneLight,
+  oneDark,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 import {
   createStyleObject,
   createClassNameString,
@@ -29,9 +32,13 @@ export type RenderCodeBlockType = (props: {
 function Code({
   renderCodeElement,
   children,
+  inlineStyle = true,
+  theme = "light",
 }: {
   children: string;
   renderCodeElement?: RenderCodeBlockType;
+  inlineStyle?: boolean;
+  theme?: "light" | "dark";
 }) {
   const renderCodeBlock = useCallback(
     (
@@ -61,7 +68,9 @@ function Code({
             )
           );
 
-        const style = createStyleObject(properties.className, {}, stylesheet);
+        const style = inlineStyle
+          ? createStyleObject(properties.className, {}, stylesheet)
+          : {};
 
         const childrenElements = renderCodeBlock(children, {
           allStylesheetSelectors,
@@ -103,8 +112,18 @@ function Code({
     <div>
       <SyntaxHighlighter
         language="typescript"
-        style={oneLight}
+        style={theme === "light" ? oneLight : oneDark}
         customStyle={{ margin: 0 }}
+        PreTag={(props) => {
+          return (
+            <pre {...props} style={inlineStyle ? props.style : undefined} />
+          );
+        }}
+        CodeTag={(props) => {
+          return (
+            <code {...props} style={inlineStyle ? props.style : undefined} />
+          );
+        }}
         renderer={(renderProps) => {
           const allStylesheetSelectors = Object.keys(
             renderProps.stylesheet
