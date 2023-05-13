@@ -3,6 +3,7 @@ import {
   ArrowLeftFromLine,
   ArrowRightFromLine,
   Edit,
+  Trash,
 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -153,7 +154,7 @@ function Detail() {
               rest plugin won't be called
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid xl:grid-cols-3 lg:grid-cols-2 gap-2">
+          <CardContent className="grid 2xl:grid-cols-3 xl:grid-cols-2 gap-2">
             <Card className="group">
               <CardHeader>
                 <CardDescription className="flex flex-row items-center">
@@ -162,8 +163,83 @@ function Detail() {
                     src={ReactIntlSVG}
                   />
                   React Intl formatMessage
-                  <div className="flex flex-grow gap-2 justify-end">
-                    <Edit className="hidden group-hover:inline-block h-6 w-6 p-1 cursor-pointer" />
+                  <span className="flex flex-grow gap-2 justify-end">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Edit className="hidden group-hover:inline-block h-6 w-6 p-1 cursor-pointer" />
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[600px]">
+                        <DialogHeader>
+                          <DialogTitle>Edit Plugin</DialogTitle>
+                          <DialogDescription>
+                            plugin configuration is object will matchType,
+                            inject and tempalte
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex flex-col gap-2">
+                          <Label htmlFor="plugin-name">Name</Label>
+                          <Input
+                            id="plugin-name"
+                            placeholder="for task identify"
+                          />
+                          <Label htmlFor="plugin-matchType">
+                            Text Match Type
+                          </Label>
+                          <Select id="plugin-matchType" defaultValue="regexp">
+                            <SelectTrigger id="area" className="col-span-3">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All</SelectItem>
+                              <SelectItem value="literal">
+                                String Literal
+                              </SelectItem>
+                              <SelectItem value="template">
+                                Template Literal
+                              </SelectItem>
+                              <SelectItem value="jsx">JSXText</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Label htmlFor="plugin-inject">Injects</Label>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex flex-row items-center gap-2 rounded-md bg-accent px-2 py-1">
+                              <Badge>source</Badge>
+                              <span>
+                                import {"{ formatMessage }"} from "react-intl"
+                              </span>
+                              <Trash className="h-4 w-4 cursor-pointer" />
+                            </div>
+                            <div className="flex flex-row gap-2 items-center">
+                              <Select>
+                                <SelectTrigger
+                                  id="area"
+                                  className="flex-grow-0 w-auto"
+                                >
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="source">Source</SelectItem>
+                                  <SelectItem value="hook">Hook</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Input placeholder="import { formatMessage } from 'react-intl'" />
+                              <Button className="flex-shrink-0" size="sm">
+                                Add
+                              </Button>
+                            </div>
+                            <Label htmlFor="plugin-template">Template</Label>
+                            <Textarea
+                              id="plugin-template"
+                              rows={10}
+                              placeholder={`<FormattedMessage id="LOCALE_KEY" defaultMessage="default message" />`}
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button type="submit">Save Plugin</Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -172,10 +248,18 @@ function Detail() {
                         <TooltipContent>move plugin to next</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  </div>
+                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge>ALL</Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>replace all matched text</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <span className="space-x-4 rounded-2xl p-2 bg-accent text-accent-foreground text-sm text-center">
                   <span>import {"{ formatMessage }"} from "react-intl"</span>
                 </span>
@@ -183,7 +267,7 @@ function Detail() {
             </Card>
             <Card className="group">
               <CardHeader>
-                <CardDescription className="flex flex-row items-center">
+                <CardTitle className="flex flex-row items-center">
                   <img
                     className="h-4 w-4 mr-1 inline-block"
                     src={ReactIntlSVG}
@@ -191,7 +275,7 @@ function Detail() {
                   <span>
                     React Intl {"<"}FormattedMessage {"/>"}
                   </span>
-                  <div className="flex flex-grow gap-2 justify-end">
+                  <span className="flex flex-grow gap-2 justify-end">
                     <Edit className="hidden group-hover:inline-block h-6 w-6 p-1 cursor-pointer" />
                     <TooltipProvider>
                       <Tooltip>
@@ -209,10 +293,25 @@ function Detail() {
                         <TooltipContent>move plugin to next</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  </div>
+                  </span>
+                </CardTitle>
+                <CardDescription>
+                  {
+                    '<{source.localImportName} id="{localeKey}"{parts? values={{parts}}}/>'
+                  }
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger className="flex flex-row">
+                      <Badge>JSXText</Badge>
+                    </TooltipTrigger>
+                    <TooltipContent align="start">
+                      only replace matched JSXText
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <span className="space-x-4 rounded-2xl p-2 bg-accent text-accent-foreground text-sm text-center">
                   <span>import {"{ FormattedMessage }"} from "react-intl"</span>
                 </span>
@@ -226,7 +325,7 @@ function Detail() {
                     src={ReactIntlSVG}
                   />
                   React Intl useIntl
-                  <div className="flex flex-grow gap-2 justify-end">
+                  <span className="flex flex-grow gap-2 justify-end">
                     <Edit className="hidden group-hover:inline-block h-6 w-6 p-1 cursor-pointer" />
                     <TooltipProvider>
                       <Tooltip>
@@ -236,10 +335,11 @@ function Detail() {
                         <TooltipContent>move plugin to previous</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                  </div>
+                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-2">
+                <Badge>All</Badge>
                 <span className="space-x-4 rounded-2xl p-2 bg-accent text-accent-foreground text-sm text-center">
                   <span>import {"{ useIntl }"} from "react-intl"</span>
                 </span>
