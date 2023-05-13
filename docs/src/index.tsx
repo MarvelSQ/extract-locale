@@ -20,7 +20,7 @@ const router = createBrowserRouter([
       },
       {
         path: "task",
-        element: <Navigate to="task/detail" />,
+        element: <Navigate to="/task/detail" />,
       },
       {
         path: "task/:type",
