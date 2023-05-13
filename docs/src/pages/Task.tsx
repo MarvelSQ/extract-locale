@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { BellRing, Check, Folder, FolderPlus, PlusSquare } from "lucide-react";
 import Preview from "./preview";
+import { useNavigate, useParams } from "react-router-dom";
 
 const tags = Array.from({ length: 50 }).map(
   (_, i, a) => `v1.2.0-beta.${a.length - i}`
@@ -46,6 +47,9 @@ const notifications = [
 type CardProps = React.ComponentProps<typeof Card>;
 
 export function Task() {
+  const match = useParams();
+  const navigate = useNavigate();
+
   return (
     <div className="flex-grow flex flex-row">
       <div className="basis-60 border-r">
@@ -81,7 +85,13 @@ export function Task() {
         </div>
       </div>
       <div className="container flex flex-col items-start py-8">
-        <Tabs defaultValue="detail" className="flex flex-col self-stretch">
+        <Tabs
+          defaultValue={match.type}
+          onValueChange={(event) => {
+            navigate(`/task/${event}`);
+          }}
+          className="flex flex-col self-stretch"
+        >
           <TabsList className="grid grid-cols-3 w-[300px]">
             <TabsTrigger value="detail">Detail</TabsTrigger>
             <TabsTrigger value="files">File List</TabsTrigger>
