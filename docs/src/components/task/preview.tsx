@@ -46,17 +46,17 @@ function Preview({ repo }: { repo: string }) {
 
   const [active, setActive] = useState<string | null>(null);
 
-  const files = useFiles(repo, {
-    onSuccess(res) {
-      if (res[0]) {
-        setActive(res[0].path);
-      }
-    },
-  });
-
-  const fileContent = useFileContent(repo, active);
+  const files = useFiles(repo);
 
   const [showPanel, setShowPanel] = useState(false);
+
+  const defaultActive = useMemo(() => {
+    return files.data?.[0]?.path;
+  }, [files.data]);
+
+  const activePath = active || defaultActive;
+
+  const fileContent = useFileContent(repo, activePath);
 
   return (
     <div
@@ -65,11 +65,11 @@ function Preview({ repo }: { repo: string }) {
       })}
     >
       <div className="flex flex-row gap-2 items-center">
-        <Select value={active as string} onValueChange={setActive}>
+        <Select value={activePath} onValueChange={setActive}>
           <SelectTrigger className="w-auto flex-grow-0">
             <SelectValue placeholder="select..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[400px]">
             {files.data?.map((file) => {
               return (
                 <SelectItem key={file.path} value={file.path}>
