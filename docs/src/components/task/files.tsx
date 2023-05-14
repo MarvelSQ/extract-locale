@@ -10,22 +10,16 @@ import {
 } from "../ui/table";
 import { loadFiles, SimpleFile } from "@/Task/loadFiles";
 import { Loader2 } from "lucide-react";
+import { useFiles } from "@/filesystem/queries";
 
 const demoFiles = loadFiles("demo");
 
-function Files() {
-  const [fileDesc, setFileDesc] = useState<{
-    name: string;
-    files: SimpleFile[];
-  } | null>(null);
-
-  useEffect(() => {
-    demoFiles.then((desc) => setFileDesc(desc));
-  }, []);
+function Files({ repo }: { repo: string }) {
+  const files = useFiles(repo);
 
   return (
     <Table>
-      <TableCaption>{fileDesc?.name}</TableCaption>
+      <TableCaption>{repo}</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[100px]">name</TableHead>
@@ -34,7 +28,7 @@ function Files() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {fileDesc?.files.map((file) => (
+        {files.data?.map((file) => (
           <TableRow key={file.path}>
             <TableCell className="font-medium">{file.path}</TableCell>
             <TableCell>

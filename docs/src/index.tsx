@@ -11,7 +11,9 @@ import { Home } from "./pages";
 import { Task } from "./pages/Task";
 import { Root } from "./pages/Root";
 import { ModalProvider } from "./lib/modal";
-import { repoQueryClient } from "./filesystem/queries";
+import { getRepos, repoQueryClient } from "./filesystem/queries";
+
+const repos = getRepos();
 
 const router = createBrowserRouter([
   {
@@ -23,11 +25,19 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "task",
-        element: <Navigate to="/task/detail" />,
+        path: "repo",
+        element: (
+          <Navigate
+            to={repos.length ? `/repo/${repos[0].name}` : "/repo/demo"}
+          />
+        ),
       },
       {
-        path: "task/:type",
+        path: "repo/:repo",
+        element: <Task />,
+      },
+      {
+        path: "repo/:repo/:tab",
         element: <Task />,
       },
     ],

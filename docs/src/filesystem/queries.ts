@@ -11,7 +11,7 @@ type Repo = {
   directoryHandleId: string;
 };
 
-function getRepos() {
+export function getRepos() {
   const repos = JSON.parse(localStorage.getItem("repos") || `[]`) as Repo[];
 
   return repos;
@@ -37,6 +37,41 @@ export function useRepo(name: string) {
   });
 
   return repo;
+}
+
+export async function getFiles(name: string) {
+  if (name === "demo") {
+    const files = import.meta.glob("../Demo/**/*.tsx", {
+      eager: true,
+      as: "raw",
+    });
+
+    return Object.entries(files).map(([path, content]) => {
+      return {
+        path: path.replace("../Demo/", ""),
+        content,
+      };
+    }) as { path: string; content: string }[];
+  }
+
+  return [];
+}
+
+type PromiseResult<P> = P extends Promise<infer T> ? T : unknown;
+
+export function useFiles(
+  name: string,
+  options: {
+    onSuccess?: (res: PromiseResult<ReturnType<typeof getFiles>>) => void;
+  }
+) {
+  const files = useQuery(
+    ["GET_REPO_FILES", name],
+    () => getFiles(name),
+    options
+  );
+
+  return files;
 }
 
 export function createRepo(

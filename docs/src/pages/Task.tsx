@@ -61,7 +61,7 @@ export function Task() {
               Task List
             </small>
             <Edit
-              className="h-6 w-6 inline-block p-1 rounded hover:bg-accent cursor-pointer group-[.edit]:bg-accent"
+              className="h-6 w-6 inline-block p-1 rounded hover:bg-accent cursor-pointer group-[.edit]:bg-primary group-[.edit]:text-primary-foreground"
               onClick={() => {
                 setEdit(!edit);
               }}
@@ -70,8 +70,11 @@ export function Task() {
           <div className="grid gap-2">
             <Button
               key="demo"
-              variant="secondary"
+              variant={match.repo === "demo" ? "default" : "secondary"}
               className="whitespace-nowrap justify-start group-[.edit]:col-span-2"
+              onClick={() => {
+                navigate(`/repo/demo`);
+              }}
             >
               <Folder className="mr-2 h-4 w-4" />
               Demo
@@ -80,14 +83,10 @@ export function Task() {
               <>
                 <Button
                   key={repo.directoryHandleId}
-                  variant="secondary"
-                  className="whitespace-nowrap justify-start"
+                  variant={match.repo === repo.name ? "default" : "secondary"}
+                  className={cn("whitespace-nowrap justify-start")}
                   onClick={() => {
-                    loadFiles(repo.directoryHandleId).then(
-                      ({ name, files }) => {
-                        console.log(name, files);
-                      }
-                    );
+                    navigate(`/repo/${repo.name}`);
                   }}
                 >
                   <Folder className="mr-2 h-4 w-4" />
@@ -145,9 +144,9 @@ export function Task() {
       </div>
       <div className="container flex flex-col items-start py-8">
         <Tabs
-          defaultValue={match.type}
+          value={match.tab || "detail"}
           onValueChange={(event) => {
-            navigate(`/task/${event}`);
+            navigate(`/repo/${match.repo}/${event}`);
           }}
           className="flex flex-col self-stretch"
         >
@@ -160,10 +159,10 @@ export function Task() {
             <Detail />
           </TabsContent>
           <TabsContent value="files">
-            <Files />
+            <Files repo={match.repo as string} />
           </TabsContent>
           <TabsContent value="preview">
-            <Preview />
+            <Preview repo={match.repo as string} />
           </TabsContent>
         </Tabs>
         {/* <div className="flex flex-row gap-8 items-stretch">

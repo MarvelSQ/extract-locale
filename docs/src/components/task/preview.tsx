@@ -8,33 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ArrowLeftFromLine,
-  ArrowRightFromLine,
-  Eye,
-  PanelRightOpen,
-  Save,
-} from "lucide-react";
-import { useLayoutEffect, useState } from "react";
+import { useFiles } from "@/filesystem/queries";
+import { cn } from "@/lib/utils";
+import { Eye, PanelRightClose, PanelRightOpen, Save } from "lucide-react";
+import { useLayoutEffect, useMemo, useState } from "react";
 
-const code = `import React, { useMemo } from "react";
-
-function Home({ name, children }: React.PropsWithChildren<{ name: string }>) {
-  const content = useMemo(() => {
-    return \`主页 - \${name}\`;
-  }, [name]);
-
-  return (
-    <div>
-      <div>{content}</div>
-      <div>{children}</div>
-    </div>
-  );
-}
-
-export default Home;`;
-
-function Preview() {
+function Preview({ repo }: { repo: string }) {
   const [theme, setTheme] = useState();
 
   useLayoutEffect(() => {
@@ -65,19 +44,43 @@ function Preview() {
     };
   }, []);
 
+  const [active, setActive] = useState<string | null>(null);
+
+  const files = useFiles(repo, {
+    onSuccess(res) {
+      if (res[0]) {
+        setActive(res[0].path);
+      }
+    },
+  });
+
+  const file = useMemo(() => {
+    if (active && files.data) {
+      return files.data.find((file) => file.path === active);
+    }
+  }, [files.data, active]);
+
+  const [showPanel, setShowPanel] = useState(false);
+
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      className={cn("flex flex-col gap-2 group", {
+        "show-panel": showPanel,
+      })}
+    >
       <div className="flex flex-row gap-2 items-center">
-        <Select defaultValue="Home.tsx">
+        <Select value={active as string} onValueChange={setActive}>
           <SelectTrigger className="w-auto flex-grow-0">
             <SelectValue placeholder="select..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="components/Button.tsx">
-              components/Button.tsx
-            </SelectItem>
-            <SelectItem value="Home.tsx">Home.tsx</SelectItem>
-            <SelectItem value="index.tsx">index.tsx</SelectItem>
+            {files.data?.map((file) => {
+              return (
+                <SelectItem key={file.path} value={file.path}>
+                  {file.path}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
         <Button size="sm">
@@ -89,16 +92,26 @@ function Preview() {
             <Save className="mr-1" size={16} />
             Save to Local
           </Button>
-          <Button size="sm" variant="outline">
-            <PanelRightOpen size={16} />
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setShowPanel(!showPanel);
+            }}
+          >
+            <PanelRightOpen className="group-[.show-panel]:hidden" size={16} />
+            <PanelRightClose
+              className="hidden group-[.show-panel]:block"
+              size={16}
+            />
           </Button>
         </div>
       </div>
       <div className="flex flex-row gap-4">
         <div className="flex-grow">
-          <Code theme={theme}>{code}</Code>
+          <Code theme={theme}>{file?.content || ""}</Code>
         </div>
-        <Card className="w-[300px]">
+        <Card className="hidden group-[.show-panel]:block w-[300px]">
           <CardHeader>
             <CardTitle>Text Matches</CardTitle>
           </CardHeader>
