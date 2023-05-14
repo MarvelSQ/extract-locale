@@ -1,5 +1,5 @@
 import { useQuery, QueryClient } from "@tanstack/react-query";
-import { getHandle } from ".";
+import { getHandle, openExtractLocale } from ".";
 
 export const repoQueryClient = new QueryClient({
   defaultOptions: {
@@ -164,9 +164,31 @@ async function getFileContent(name: string, path: string) {
 
       return content;
     }
+  } else {
+    throw {
+      type: "no_handle",
+    };
   }
 
   return "";
+}
+
+export async function openHandle(name: string) {
+  const repo = getRepo(name);
+
+  if (repo?.directoryHandleId) {
+    const result = await openExtractLocale({
+      id: repo.directoryHandleId,
+    });
+
+    repoQueryClient.invalidateQueries(["GET_FILE_CONTENT", name]);
+
+    if (result && result.name === name) {
+      return result;
+    }
+  }
+
+  throw new Error("No handle found");
 }
 
 export function useFileContent(repo: string, path?: string | null) {
@@ -175,6 +197,7 @@ export function useFileContent(repo: string, path?: string | null) {
     () => getFileContent(repo, path as string),
     {
       enabled: !!path,
+      retry: false,
     }
   );
 

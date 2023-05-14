@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useFileContent, useFiles } from "@/filesystem/queries";
+import { openHandle, useFileContent, useFiles } from "@/filesystem/queries";
 import { cn } from "@/lib/utils";
 import { Eye, PanelRightClose, PanelRightOpen, Save } from "lucide-react";
 import { useLayoutEffect, useMemo, useState } from "react";
@@ -105,7 +105,22 @@ function Preview({ repo }: { repo: string }) {
       </div>
       <div className="flex flex-row gap-4 w-full">
         <div className="flex-grow overflow-auto">
-          <Code theme={theme}>{fileContent.data as string}</Code>
+          {fileContent.error?.type === "no_handle" ? (
+            <p className="text-sm text-muted-foreground">
+              there is no live preview for this file, you can click{" "}
+              <Button
+                variant="link"
+                onClick={() => {
+                  openHandle(repo);
+                }}
+              >
+                here
+              </Button>{" "}
+              to get the file
+            </p>
+          ) : (
+            <Code theme={theme}>{fileContent.data as string}</Code>
+          )}
         </div>
         <Card className="hidden group-[.show-panel]:block w-[300px]">
           <CardHeader>
