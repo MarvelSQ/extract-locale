@@ -21,28 +21,22 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { BellRing, Check, Folder, FolderPlus, PlusSquare } from "lucide-react";
-import Preview from "./preview";
+import {
+  BellRing,
+  Check,
+  Edit,
+  Folder,
+  FolderPlus,
+  PlusSquare,
+  Trash,
+} from "lucide-react";
+import Preview from "../components/task/preview";
 import { useNavigate, useParams } from "react-router-dom";
-
-const tags = Array.from({ length: 50 }).map(
-  (_, i, a) => `v1.2.0-beta.${a.length - i}`
-);
-
-const notifications = [
-  {
-    title: "Your call has been confirmed.",
-    description: "1 hour ago",
-  },
-  {
-    title: "You have a new message!",
-    description: "1 hour ago",
-  },
-  {
-    title: "Your subscription is expiring soon!",
-    description: "2 hours ago",
-  },
-];
+import Fileselector from "@/components/task/fileselector";
+import { useState } from "react";
+import { openDialog } from "@/lib/modal";
+import { loadFiles } from "@/Task/loadFiles";
+import { useRepos, createRepo, deleteRepo } from "@/filesystem/queries";
 
 type CardProps = React.ComponentProps<typeof Card>;
 
@@ -50,38 +44,103 @@ export function Task() {
   const match = useParams();
   const navigate = useNavigate();
 
+  const repos = useRepos();
+
+  const [edit, setEdit] = useState(false);
+
   return (
     <div className="flex-grow flex flex-row">
-      <div className="basis-60 border-r">
-        <div className="sticky top-14 p-4 flex flex-col gap-y-2">
-          <Button
-            variant="secondary"
-            className="whitespace-nowrap justify-start"
-          >
-            <Folder className="mr-2 h-4 w-4" />
-            Demo
-          </Button>
-          <Button
-            variant="secondary"
-            className="whitespace-nowrap justify-start"
-          >
-            <Folder className="mr-2 h-4 w-4" />
-            HOA-FE-HEATMAP
-          </Button>
-          <Button className="whitespace-nowrap justify-start">
-            <Folder className="mr-2 h-4 w-4" />
-            HOA-FE-HEATMAP
-          </Button>
-          <Button
-            variant="secondary"
-            className="whitespace-nowrap justify-start"
-          >
-            <Folder className="mr-2 h-4 w-4" />
-            HOA-FE-HEATMAP
-          </Button>
-          <Button variant="ghost">
-            <FolderPlus className="mr-2 h-4 w-4" /> Add Repo
-          </Button>
+      <div
+        className={`basis-60 border-r flex-shrink-0 ${
+          edit ? "group edit" : ""
+        }`}
+      >
+        <div className="sticky top-14 p-4 flex flex-col gap-2">
+          <div className="flex flex-row justify-between items-center">
+            <small className="text-sm font-medium leading-none">
+              Task List
+            </small>
+            <Edit
+              className="h-6 w-6 inline-block p-1 rounded hover:bg-accent cursor-pointer group-[.edit]:bg-accent"
+              onClick={() => {
+                setEdit(!edit);
+              }}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Button
+              key="demo"
+              variant="secondary"
+              className="whitespace-nowrap justify-start group-[.edit]:col-span-2"
+            >
+              <Folder className="mr-2 h-4 w-4" />
+              Demo
+            </Button>
+            {repos.data?.map((repo) => (
+              <>
+                <Button
+                  key={repo.directoryHandleId}
+                  variant="secondary"
+                  className="whitespace-nowrap justify-start"
+                  onClick={() => {
+                    loadFiles(repo.directoryHandleId).then(
+                      ({ name, files }) => {
+                        console.log(name, files);
+                      }
+                    );
+                  }}
+                >
+                  <Folder className="mr-2 h-4 w-4" />
+                  {repo.name}
+                </Button>
+                {edit && (
+                  <Button
+                    size="sm"
+                    className="self-center"
+                    onClick={() => {
+                      deleteRepo(repo.name);
+                    }}
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
+            ))}
+            {repos.data?.length === 0 && (
+              <div className="text-muted-foreground text-sm group-[.edit]:col-span-2 text-center">
+                No repos found
+              </div>
+            )}
+            <Button
+              variant="ghost"
+              className="group-[.edit]:col-span-2"
+              onClick={() => {
+                const id = Math.random().toString(36).substring(2, 10);
+                loadFiles(id).then(({ name, files }) => {
+                  const selectedFiles = new Promise((res) => {
+                    openDialog(Fileselector, {
+                      directory: name,
+                      files: files.map((file) => ({
+                        key: file.path,
+                        title: file.path,
+                      })),
+                      onConfirm: (files) => {
+                        res(files);
+                      },
+                    });
+                  });
+
+                  createRepo(
+                    name,
+                    files.map((file) => ({ path: file.path })),
+                    id
+                  );
+                });
+              }}
+            >
+              <FolderPlus className="mr-2 h-4 w-4" /> Add Repo
+            </Button>
+          </div>
         </div>
       </div>
       <div className="container flex flex-col items-start py-8">

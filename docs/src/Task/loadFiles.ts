@@ -12,58 +12,63 @@ export type SimpleFile = {
   save?: (content: string) => Promise<void>;
 };
 
-export async function loadFiles(type: string): Promise<{
+export async function loadFiles(id: string): Promise<{
   name: string;
   files: SimpleFile[];
+  directoryHandleId: string;
 }> {
-  switch (type) {
-    case "demo":
-      const files = await import.meta.glob("../Demo/**/*.tsx", {
-        eager: true,
-        as: "raw",
-      });
+  if (id === "demo") {
+    const files = await import.meta.glob("../Demo/**/*.tsx", {
+      eager: true,
+      as: "raw",
+    });
 
-      return {
-        name: "demo",
-        files: Object.entries(files).map(([path, content]) => {
-          return {
-            path: path.replace("../Demo/", ""),
-            content,
-          };
-        }) as { path: string; content: string }[],
-      };
-    case "react":
-      const fileTree = await openExtractLocale();
-      if (fileTree) {
+    return {
+      name: "demo",
+      files: Object.entries(files).map(([path, content]) => {
         return {
-          name: fileTree.name,
-          files: flatFileTree(await fileTree.files, (node, parent) => {
-            if (parent) {
-              return {
-                ...node,
-                name: `${parent.name}/${node.name}`,
-              };
-            }
-
-            return node;
-          }).map(
-            (file) =>
-              ({
-                path: file.name,
-                get content() {
-                  return getFileContent(file);
-                },
-                async save(content: string) {
-                  await saveResult(file, content);
-                },
-              } as SimpleFile)
-          ),
+          path: path.replace("../Demo/", ""),
+          content,
         };
-      }
+      }) as { path: string; content: string }[],
+      directoryHandleId: "",
+    };
+  }
+
+  const fileTree = await openExtractLocale({
+    id,
+  });
+  if (fileTree) {
+    return {
+      directoryHandleId: id,
+      name: fileTree.name,
+      files: flatFileTree(await fileTree.files, (node, parent) => {
+        if (parent) {
+          return {
+            ...node,
+            name: `${parent.name}/${node.name}`,
+          };
+        }
+
+        return node;
+      }).map(
+        (file) =>
+          ({
+            path: file.name,
+            get content() {
+              return getFileContent(file);
+            },
+            async save(content: string) {
+              await saveResult(file, content);
+            },
+          } as SimpleFile)
+      ),
+    };
   }
 
   return {
     name: "unknown",
     files: [],
+    directoryHandleId: id,
   };
 }

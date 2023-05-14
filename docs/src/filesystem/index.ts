@@ -1,8 +1,8 @@
 import { ExtractDirectory, ExtractFile } from "./type";
 
-export function openDirectory() {
+export function openDirectory(option: DirectoryPickerOptions) {
   return window
-    .showDirectoryPicker()
+    .showDirectoryPicker(option)
     .then((directoryHandle) => {
       return directoryHandle;
     })
@@ -38,8 +38,8 @@ async function readAllFiles(handle: FileSystemDirectoryHandle) {
   return entries;
 }
 
-export async function openExtractLocale() {
-  const directoryHandle = await openDirectory();
+export async function openExtractLocale(option: DirectoryPickerOptions) {
+  const directoryHandle = await openDirectory(option);
 
   return directoryHandle
     ? {

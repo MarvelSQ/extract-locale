@@ -202,11 +202,13 @@ function Detail() {
                           </Select>
                           <Label htmlFor="plugin-inject">Injects</Label>
                           <div className="flex flex-col gap-2">
-                            <div className="flex flex-row items-center gap-2 rounded-md bg-accent px-2 py-1">
-                              <Badge>source</Badge>
-                              <span>
-                                import {"{ formatMessage }"} from "react-intl"
-                              </span>
+                            <div className="flex flex-row items-center gap-2 justify-between">
+                              <div className="flex flex-row items-center gap-2  rounded-md bg-accent px-2 py-1">
+                                <Badge>source</Badge>
+                                <span>
+                                  import {"{ formatMessage }"} from "react-intl"
+                                </span>
+                              </div>
                               <Trash className="h-4 w-4 cursor-pointer" />
                             </div>
                             <div className="flex flex-row gap-2 items-center">
@@ -272,11 +274,11 @@ function Detail() {
                     className="h-4 w-4 mr-1 inline-block"
                     src={ReactIntlSVG}
                   />
-                  <span>
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap">
                     React Intl {"<"}FormattedMessage {"/>"}
                   </span>
                   <span className="flex flex-grow gap-2 justify-end">
-                    <Edit className="hidden group-hover:inline-block h-6 w-6 p-1 cursor-pointer" />
+                    <Edit className="hidden group-hover:inline-block h-6 w-6 p-1 cursor-pointer rounded-sm hover:bg-muted" />
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
