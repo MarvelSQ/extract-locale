@@ -10,7 +10,7 @@ export function openDialog<P extends Record<string, any>>(
   if (!DialogMap.has(Dialog)) {
     DialogMap.set(
       Dialog,
-      NiceModal.create(() => {
+      NiceModal.create((props) => {
         const modal = useModal();
 
         return (
