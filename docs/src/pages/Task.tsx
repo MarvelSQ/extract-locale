@@ -33,7 +33,7 @@ import {
 import Preview from "../components/task/preview";
 import { useNavigate, useParams } from "react-router-dom";
 import Fileselector from "@/components/task/fileselector";
-import { useState } from "react";
+import React, { useState } from "react";
 import { openDialog } from "@/lib/modal";
 import { SimpleFile, loadFiles } from "@/Task/loadFiles";
 import { useRepos, createRepo, deleteRepo } from "@/filesystem/queries";
@@ -80,9 +80,8 @@ export function Task() {
               Demo
             </Button>
             {repos.data?.map((repo) => (
-              <>
+              <React.Fragment key={repo.directoryHandleId}>
                 <Button
-                  key={repo.directoryHandleId}
                   variant={match.repo === repo.name ? "default" : "secondary"}
                   className={cn("whitespace-nowrap justify-start")}
                   onClick={() => {
@@ -103,7 +102,7 @@ export function Task() {
                     <Trash className="h-4 w-4" />
                   </Button>
                 )}
-              </>
+              </React.Fragment>
             ))}
             {repos.data?.length === 0 && (
               <div className="text-muted-foreground text-sm group-[.edit]:col-span-2 text-center">
@@ -120,25 +119,25 @@ export function Task() {
                     acc[cur.path] = cur;
                     return acc;
                   }, {} as Record<string, SimpleFile>);
-                  return new Promise<SimpleFile[]>((res) => {
-                    openDialog(Fileselector, {
-                      directory: name,
-                      files: files.map((file) => ({
-                        key: file.path,
-                        title: file.path,
-                      })),
-                      onConfirm: (keys) => {
-                        res(keys.sort().map((key) => fileMap[key]));
-                      },
-                    });
-                  }).then((files) => {
-                    createRepo(
-                      name,
-                      files.map((file) => ({ path: file.path })),
-                      id
-                    );
 
-                    navigate(`/repo/${name}`);
+                  openDialog(Fileselector, {
+                    directory: name,
+                    files: files.map((file) => ({
+                      key: file.path,
+                      title: file.path,
+                    })),
+                    onConfirm: (keys) => {
+                      const files = keys
+                        .sort()
+                        .map((key) => fileMap[key])
+                        .map((file) => ({
+                          path: file.path,
+                        }));
+
+                      createRepo(name, files, id);
+
+                      navigate(`/repo/${name}`);
+                    },
                   });
                 });
               }}
@@ -148,7 +147,7 @@ export function Task() {
           </div>
         </div>
       </div>
-      <div className="container flex flex-col items-start py-8">
+      <div className="container flex flex-col items-start py-8 overflow-auto">
         <Tabs
           value={match.tab || "detail"}
           onValueChange={(event) => {

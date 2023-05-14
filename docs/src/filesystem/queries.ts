@@ -78,7 +78,7 @@ type PromiseResult<P> = P extends Promise<infer T> ? T : unknown;
 
 export function useFiles(
   name: string,
-  options: {
+  options?: {
     onSuccess?: (res: PromiseResult<ReturnType<typeof getFiles>>) => void;
   }
 ) {
