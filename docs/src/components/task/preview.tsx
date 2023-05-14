@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useFiles } from "@/filesystem/queries";
+import { useFileContent, useFiles } from "@/filesystem/queries";
 import { cn } from "@/lib/utils";
 import { Eye, PanelRightClose, PanelRightOpen, Save } from "lucide-react";
 import { useLayoutEffect, useMemo, useState } from "react";
@@ -54,11 +54,7 @@ function Preview({ repo }: { repo: string }) {
     },
   });
 
-  const file = useMemo(() => {
-    if (active && files.data) {
-      return files.data.find((file) => file.path === active);
-    }
-  }, [files.data, active]);
+  const fileContent = useFileContent(repo, active);
 
   const [showPanel, setShowPanel] = useState(false);
 
@@ -107,9 +103,9 @@ function Preview({ repo }: { repo: string }) {
           </Button>
         </div>
       </div>
-      <div className="flex flex-row gap-4">
-        <div className="flex-grow">
-          <Code theme={theme}>{file?.content || ""}</Code>
+      <div className="flex flex-row gap-4 w-full">
+        <div className="flex-grow overflow-auto">
+          <Code theme={theme}>{fileContent.data as string}</Code>
         </div>
         <Card className="hidden group-[.show-panel]:block w-[300px]">
           <CardHeader>

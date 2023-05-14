@@ -35,7 +35,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Fileselector from "@/components/task/fileselector";
 import { useState } from "react";
 import { openDialog } from "@/lib/modal";
-import { loadFiles } from "@/Task/loadFiles";
+import { SimpleFile, loadFiles } from "@/Task/loadFiles";
 import { useRepos, createRepo, deleteRepo } from "@/filesystem/queries";
 
 type CardProps = React.ComponentProps<typeof Card>;
@@ -116,24 +116,30 @@ export function Task() {
               onClick={() => {
                 const id = Math.random().toString(36).substring(2, 10);
                 loadFiles(id).then(({ name, files }) => {
-                  const selectedFiles = new Promise((res) => {
+                  const fileMap = files.reduce((acc, cur) => {
+                    acc[cur.path] = cur;
+                    return acc;
+                  }, {} as Record<string, SimpleFile>);
+                  return new Promise<SimpleFile[]>((res) => {
                     openDialog(Fileselector, {
                       directory: name,
                       files: files.map((file) => ({
                         key: file.path,
                         title: file.path,
                       })),
-                      onConfirm: (files) => {
-                        res(files);
+                      onConfirm: (keys) => {
+                        res(keys.sort().map((key) => fileMap[key]));
                       },
                     });
-                  });
+                  }).then((files) => {
+                    createRepo(
+                      name,
+                      files.map((file) => ({ path: file.path })),
+                      id
+                    );
 
-                  createRepo(
-                    name,
-                    files.map((file) => ({ path: file.path })),
-                    id
-                  );
+                    navigate(`/repo/${name}`);
+                  });
                 });
               }}
             >

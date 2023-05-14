@@ -1,4 +1,5 @@
 import { useQuery, QueryClient } from "@tanstack/react-query";
+import { getHandle } from ".";
 
 export const repoQueryClient = new QueryClient();
 
@@ -52,6 +53,15 @@ export async function getFiles(name: string) {
         content,
       };
     }) as { path: string; content: string }[];
+  }
+
+  const repo = getRepo(name);
+
+  if (repo) {
+    return repo.files.map((file) => ({
+      path: file.path,
+      content: undefined,
+    }));
   }
 
   return [];
@@ -118,4 +128,38 @@ export function deleteRepo(name: string) {
 
   repoQueryClient.invalidateQueries(["GET_REPOS"]);
   repoQueryClient.invalidateQueries(["GET_REPO", name]);
+}
+
+async function getFileContent(name: string, path: string) {
+  const handle = getHandle(name);
+
+  if (handle) {
+    const { files } = handle;
+
+    const file = files.find((file) => file.name === path);
+
+    if (file) {
+      const content = await (file.handle as FileSystemFileHandle)
+        .getFile()
+        .then((file) => {
+          return file.text();
+        });
+
+      return content;
+    }
+  }
+
+  return "";
+}
+
+export function useFileContent(repo: string, path?: string | null) {
+  const fileContent = useQuery(
+    ["GET_FILE_CONTENT", repo, path],
+    () => getFileContent(repo, path as string),
+    {
+      enabled: !!path,
+    }
+  );
+
+  return fileContent;
 }

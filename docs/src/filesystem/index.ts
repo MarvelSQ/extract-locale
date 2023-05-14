@@ -1,4 +1,5 @@
 import { ExtractDirectory, ExtractFile } from "./type";
+import { flatFileTree } from "./utils";
 
 export function openDirectory(option: DirectoryPickerOptions) {
   return window
@@ -41,10 +42,39 @@ async function readAllFiles(handle: FileSystemDirectoryHandle) {
 export async function openExtractLocale(option: DirectoryPickerOptions) {
   const directoryHandle = await openDirectory(option);
 
-  return directoryHandle
-    ? {
-        name: directoryHandle.name,
-        files: readAllFiles(directoryHandle),
-      }
-    : null;
+  if (directoryHandle) {
+    const name = directoryHandle.name;
+
+    const files = await readAllFiles(directoryHandle);
+
+    currentHandles.push({
+      name: directoryHandle.name,
+      files: flatFileTree(files, (node, parent) => {
+        if (parent) {
+          return {
+            ...node,
+            name: `${parent.name}/${node.name}`,
+          };
+        }
+
+        return node;
+      }),
+    });
+
+    return {
+      name,
+      files,
+    };
+  }
+
+  return null;
+}
+
+const currentHandles: {
+  name: string;
+  files: Array<ExtractDirectory | ExtractFile>;
+}[] = [];
+
+export function getHandle(name: string) {
+  return currentHandles.find((handle) => handle.name === name);
 }

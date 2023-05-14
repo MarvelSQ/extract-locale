@@ -198,6 +198,7 @@ function Fileselector({
           <Button
             onClick={() => {
               onConfirm(targetKeys);
+              onClose();
             }}
           >
             Submit
