@@ -1,7 +1,14 @@
 import { useQuery, QueryClient } from "@tanstack/react-query";
 import { getHandle } from ".";
 
-export const repoQueryClient = new QueryClient();
+export const repoQueryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnMount: false,
+      staleTime: Infinity,
+    },
+  },
+});
 
 type Repo = {
   name: string;
