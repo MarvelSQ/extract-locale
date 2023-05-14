@@ -25,14 +25,6 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: "repo",
-        element: (
-          <Navigate
-            to={repos.length ? `/repo/${repos[0].name}` : "/repo/demo"}
-          />
-        ),
-      },
-      {
         path: "repo/:repo",
         element: <Task />,
       },

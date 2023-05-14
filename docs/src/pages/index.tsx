@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { useRepos } from "@/filesystem/queries";
 import { Link } from "react-router-dom";
 
 export function Home() {
+  const repos = useRepos();
+
   return (
     <section className="flex-grow self-center flex flex-col justify-center">
       <h1 className="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
@@ -13,7 +16,9 @@ export function Home() {
         to <span className="">formatMessage</span>
       </p>
       <Button asChild>
-        <Link to="/repo">Get Start</Link>
+        <Link to={`/repo/${repos.data?.length ? repos.data[0].name : "demo"}`}>
+          Get Start
+        </Link>
       </Button>
     </section>
   );
