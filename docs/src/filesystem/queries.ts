@@ -131,6 +131,16 @@ export function deleteRepo(name: string) {
 }
 
 async function getFileContent(name: string, path: string) {
+  if (name === "demo") {
+    const files = await getFiles(name);
+
+    const file = (files as { path: string; content: string }[]).find(
+      (file) => file.path === path
+    );
+
+    return file?.content || "";
+  }
+
   const handle = getHandle(name);
 
   if (handle) {
