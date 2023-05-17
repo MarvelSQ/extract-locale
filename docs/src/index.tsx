@@ -1,5 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { Analytics } from "@vercel/analytics/react";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -43,6 +44,7 @@ root.render(
     <ModalProvider>
       <QueryClientProvider client={repoQueryClient}>
         <RouterProvider router={router} />
+        <Analytics />
       </QueryClientProvider>
     </ModalProvider>
   </React.StrictMode>
