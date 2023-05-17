@@ -172,3 +172,39 @@ export function getHistory(directory: string) {
     removes: string[];
   };
 }
+
+export async function getFile(
+  handle: FileSystemDirectoryHandle,
+  filePath: string
+) {
+  const paths = filePath.split("/");
+
+  let currentHandle: FileSystemDirectoryHandle = handle;
+
+  for (let i = 0; i < paths.length; i++) {
+    if (i === paths.length - 1) {
+      const nextHandle = await currentHandle.getFileHandle(paths[i]);
+      if (nextHandle instanceof FileSystemFileHandle) {
+        return nextHandle;
+      }
+
+      throw new Error("not file");
+    }
+
+    let prevHandle = currentHandle;
+
+    for await (const item of currentHandle.values()) {
+      if (item.name === paths[i]) {
+        if (item instanceof FileSystemDirectoryHandle) {
+          currentHandle = item;
+          break;
+        }
+        throw new Error("not directory");
+      }
+    }
+
+    if (prevHandle === currentHandle) {
+      throw new Error("not found");
+    }
+  }
+}

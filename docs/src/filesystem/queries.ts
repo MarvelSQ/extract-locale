@@ -1,5 +1,6 @@
 import { useQuery, QueryClient } from "@tanstack/react-query";
-import { getHandle, openExtractLocale } from ".";
+import { openExtractLocale } from ".";
+import * as Task from "@/Task/init";
 
 export const repoQueryClient = new QueryClient({
   defaultOptions: {
@@ -10,18 +11,16 @@ export const repoQueryClient = new QueryClient({
   },
 });
 
-type Repo = {
-  name: string;
-  files: {
-    path: string;
-  }[];
-  config: Record<string, any>;
-  directoryHandleId: string;
-};
+let repos = Task.init();
+
+function writeRepos() {
+  localStorage.setItem(
+    "repos",
+    JSON.stringify(repos.map((repo) => repo.toJSON()))
+  );
+}
 
 export function getRepos() {
-  const repos = JSON.parse(localStorage.getItem("repos") || `[]`) as Repo[];
-
   return repos;
 }
 
@@ -49,7 +48,17 @@ export function useRepo(name: string) {
 
 export async function getFiles(name: string) {
   if (name === "demo") {
-    const files = import.meta.glob("../Demo/**/*.tsx", {
+    const files = (
+      import.meta as unknown as {
+        glob(
+          path: string,
+          option: {
+            eager: boolean;
+            as: string;
+          }
+        ): Record<string, string>;
+      }
+    ).glob("../Demo/**/*.tsx", {
       eager: true,
       as: "raw",
     });
@@ -94,44 +103,25 @@ export function useFiles(
 export function createRepo(
   name: string,
   files: { path: string }[],
-  directoryHandleId: string
+  directoryHandleId: string,
+  handle: FileSystemDirectoryHandle
 ) {
-  const repos = getRepos();
+  const repo = Task.createRepo(name, files, directoryHandleId);
 
-  const repoIndex = repos.findIndex((repo) => repo.name === name);
+  repo.handle = handle;
 
-  if (repoIndex === -1) {
-    repos.push({
-      name,
-      files,
-      config: {},
-      directoryHandleId,
-    });
-  } else {
-    repos[repoIndex] = {
-      name,
-      files,
-      config: {},
-      directoryHandleId,
-    };
-  }
+  repos = [...repos, repo];
 
-  localStorage.setItem("repos", JSON.stringify(repos));
+  writeRepos();
 
   repoQueryClient.invalidateQueries(["GET_REPOS"]);
   repoQueryClient.invalidateQueries(["GET_REPO", name]);
 }
 
 export function deleteRepo(name: string) {
-  const repos = getRepos();
+  repos = repos.filter((repo) => repo.name !== name);
 
-  const repoIndex = repos.findIndex((repo) => repo.name === name);
-
-  if (repoIndex !== -1) {
-    repos.splice(repoIndex, 1);
-  }
-
-  localStorage.setItem("repos", JSON.stringify(repos));
+  writeRepos();
 
   repoQueryClient.invalidateQueries(["GET_REPOS"]);
   repoQueryClient.invalidateQueries(["GET_REPO", name]);
@@ -148,29 +138,15 @@ async function getFileContent(name: string, path: string) {
     return file?.content || "";
   }
 
-  const handle = getHandle(name);
+  const repo = repos.find((repo) => repo.name === name);
 
-  if (handle) {
-    const { files } = handle;
-
-    const file = files.find((file) => file.name === path);
-
-    if (file) {
-      const content = await (file.handle as FileSystemFileHandle)
-        .getFile()
-        .then((file) => {
-          return file.text();
-        });
-
-      return content;
-    }
-  } else {
-    throw {
-      type: "no_handle",
-    };
+  if (!repo) {
+    throw new Error("Repo not found");
   }
 
-  return "";
+  const conetnt = await repo.getFileContent(path);
+
+  return conetnt;
 }
 
 export async function openHandle(name: string) {
@@ -181,9 +157,9 @@ export async function openHandle(name: string) {
       id: repo.directoryHandleId,
     });
 
-    repoQueryClient.invalidateQueries(["GET_FILE_CONTENT", name]);
-
     if (result && result.name === name) {
+      repo.handle = result.handle;
+      repoQueryClient.invalidateQueries(["GET_FILE_CONTENT", name]);
       return result;
     }
   }
@@ -202,4 +178,37 @@ export function useFileContent(repo: string, path?: string | null) {
   );
 
   return fileContent;
+}
+
+export function executeTask(name: string, config: {}) {
+  const repo = getRepo(name);
+
+  if (!repo) {
+    throw new Error("Repo not found");
+  }
+
+  return repo.executeTask(config);
+}
+
+export function getFileTask(name: string, filePath: string) {
+  const repo = getRepo(name);
+
+  if (!repo) {
+    throw new Error("Repo not found");
+  }
+
+  return repo.tasks.find((task) => task.path === filePath)?.result;
+}
+
+export function useFileTasks(name: string, filePath?: string) {
+  const fileTasks = useQuery(
+    ["GET_FILE_TASKS", name, filePath],
+    () => getFileTask(name, filePath as string),
+    {
+      enabled: !!filePath,
+      retry: false,
+    }
+  );
+
+  return fileTasks;
 }

@@ -114,7 +114,7 @@ export function Task() {
               className="group-[.edit]:col-span-2"
               onClick={() => {
                 const id = Math.random().toString(36).substring(2, 10);
-                loadFiles(id).then(({ name, files }) => {
+                loadFiles(id).then(({ name, files, handle }) => {
                   const fileMap = files.reduce((acc, cur) => {
                     acc[cur.path] = cur;
                     return acc;
@@ -134,7 +134,12 @@ export function Task() {
                           path: file.path,
                         }));
 
-                      createRepo(name, files, id);
+                      createRepo(
+                        name,
+                        files,
+                        id,
+                        handle as FileSystemDirectoryHandle
+                      );
 
                       navigate(`/repo/${name}`);
                     },

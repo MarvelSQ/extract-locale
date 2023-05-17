@@ -16,6 +16,7 @@ export async function loadFiles(id: string): Promise<{
   name: string;
   files: SimpleFile[];
   directoryHandleId: string;
+  handle?: FileSystemDirectoryHandle;
 }> {
   if (id === "demo") {
     const files = await import.meta.glob("../Demo/**/*.tsx", {
@@ -40,6 +41,7 @@ export async function loadFiles(id: string): Promise<{
   });
   if (fileTree) {
     return {
+      handle: fileTree.handle,
       directoryHandleId: id,
       name: fileTree.name,
       files: flatFileTree(await fileTree.files, (node, parent) => {

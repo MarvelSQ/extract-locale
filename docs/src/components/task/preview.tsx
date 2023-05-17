@@ -8,13 +8,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { openHandle, useFileContent, useFiles } from "@/filesystem/queries";
+import {
+  openHandle,
+  useFileContent,
+  useFileTasks,
+  useFiles,
+} from "@/filesystem/queries";
 import { cn } from "@/lib/utils";
 import { Eye, PanelRightClose, PanelRightOpen, Save } from "lucide-react";
 import { useLayoutEffect, useMemo, useState } from "react";
 
 function Preview({ repo }: { repo: string }) {
-  const [theme, setTheme] = useState();
+  const [theme, setTheme] = useState<"dark" | "light">();
 
   useLayoutEffect(() => {
     const handleChange = () => {
@@ -48,7 +53,7 @@ function Preview({ repo }: { repo: string }) {
 
   const files = useFiles(repo);
 
-  const [showPanel, setShowPanel] = useState(false);
+  const [showPanel, setShowPanel] = useState(true);
 
   const defaultActive = useMemo(() => {
     return files.data?.[0]?.path;
@@ -57,6 +62,18 @@ function Preview({ repo }: { repo: string }) {
   const activePath = active || defaultActive;
 
   const fileContent = useFileContent(repo, activePath);
+
+  const fileTasks = useFileTasks(repo, activePath);
+
+  const error =
+    fileTasks.data &&
+    "error" in fileTasks.data &&
+    (fileTasks.data.error as Error);
+
+  const tasks =
+    fileTasks.data && "tasks" in fileTasks.data
+      ? fileTasks.data.tasks
+      : undefined;
 
   return (
     <div
@@ -105,7 +122,8 @@ function Preview({ repo }: { repo: string }) {
       </div>
       <div className="flex flex-row gap-4 w-full">
         <div className="flex-grow overflow-auto">
-          {fileContent.error?.type === "no_handle" ? (
+          {(fileContent.error as Error | undefined)?.message ===
+          "No directory handle" ? (
             <p className="text-sm text-muted-foreground">
               there is no live preview for this file, you can click{" "}
               <Button
@@ -126,7 +144,38 @@ function Preview({ repo }: { repo: string }) {
           <CardHeader>
             <CardTitle>Text Matches</CardTitle>
           </CardHeader>
-          <CardContent></CardContent>
+          <CardContent>
+            {error && (
+              <p className="text-sm text-muted-foreground">{error.message}</p>
+            )}
+            {tasks?.length === 0 && (
+              <p className="text-sm text-muted-foreground">no matches found</p>
+            )}
+            {tasks?.map((task) => {
+              return (
+                <div
+                  key={task.match.start}
+                  className="flex flex-col gap-1 border-b border-accent pb-1"
+                >
+                  <p className="text-sm text-muted-foreground">
+                    "
+                    {Array.isArray(task.match.text)
+                      ? task.match.text.join("[]")
+                      : task.match.text}
+                    "
+                  </p>
+                  <div className="flex flex-row gap-1">
+                    <span className="text-xs rounded bg-accent-foreground text-accent p-1">
+                      {task.localeKey}
+                    </span>
+                    <span className="text-xs rounded bg-accent-foreground text-accent p-1">
+                      {task.match.type}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
         </Card>
       </div>
     </div>
