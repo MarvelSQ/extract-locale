@@ -1,6 +1,7 @@
 import { useQuery, QueryClient } from "@tanstack/react-query";
 import { openExtractLocale } from ".";
 import * as Task from "@/Task/init";
+import { Repo } from "@/Task/Entity";
 
 export const repoQueryClient = new QueryClient({
   defaultOptions: {
@@ -12,6 +13,38 @@ export const repoQueryClient = new QueryClient({
 });
 
 let repos = Task.init();
+
+function initDemo() {
+  const DemoRepo = new Repo("Demo", "demo", [], {});
+
+  const demoFileMap = (
+    import.meta as unknown as {
+      glob(
+        path: string,
+        option: {
+          eager: boolean;
+          as: string;
+        }
+      ): Record<string, string>;
+    }
+  ).glob("../Demo/**/*.tsx", {
+    eager: true,
+    as: "raw",
+  });
+
+  DemoRepo.files = Object.entries(demoFileMap).map(([path, content]) => {
+    return {
+      path: path.replace("../Demo/", ""),
+      content,
+    };
+  }) as { path: string; content: string }[];
+
+  DemoRepo.executeTask({});
+
+  return DemoRepo;
+}
+
+const DemoRepo = initDemo();
 
 function writeRepos() {
   localStorage.setItem(
@@ -25,6 +58,10 @@ export function getRepos() {
 }
 
 function getRepo(name: string) {
+  if (name === "demo") {
+    return DemoRepo;
+  }
+
   const repos = getRepos();
 
   return repos.find((repo) => repo.name === name);
@@ -47,30 +84,6 @@ export function useRepo(name: string) {
 }
 
 export async function getFiles(name: string) {
-  if (name === "demo") {
-    const files = (
-      import.meta as unknown as {
-        glob(
-          path: string,
-          option: {
-            eager: boolean;
-            as: string;
-          }
-        ): Record<string, string>;
-      }
-    ).glob("../Demo/**/*.tsx", {
-      eager: true,
-      as: "raw",
-    });
-
-    return Object.entries(files).map(([path, content]) => {
-      return {
-        path: path.replace("../Demo/", ""),
-        content,
-      };
-    }) as { path: string; content: string }[];
-  }
-
   const repo = getRepo(name);
 
   if (repo) {
@@ -128,17 +141,7 @@ export function deleteRepo(name: string) {
 }
 
 async function getFileContent(name: string, path: string) {
-  if (name === "demo") {
-    const files = await getFiles(name);
-
-    const file = (files as { path: string; content: string }[]).find(
-      (file) => file.path === path
-    );
-
-    return file?.content || "";
-  }
-
-  const repo = repos.find((repo) => repo.name === name);
+  const repo = getRepo(name);
 
   if (!repo) {
     throw new Error("Repo not found");

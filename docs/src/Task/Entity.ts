@@ -7,7 +7,11 @@ export class Repo {
   /**
    * filtered files by user select
    */
-  public files: { path: string; handle?: FileSystemFileHandle }[] = [];
+  public files: {
+    path: string;
+    handle?: FileSystemFileHandle;
+    content?: string;
+  }[] = [];
 
   /**
    * accessed files but not in files
@@ -27,6 +31,7 @@ export class Repo {
     directoryHandleId: string,
     files: {
       path: string;
+      content?: string;
       handle?: FileSystemFileHandle;
     }[],
     config?: any
@@ -50,6 +55,11 @@ export class Repo {
   }
 
   async getFileContent(filePath: string) {
+    const file = this.files.find((file) => file.path === filePath);
+    if (file?.content) {
+      return file.content;
+    }
+
     if (!this.directoryHandle) {
       throw new Error("No directory handle");
     }
@@ -57,8 +67,6 @@ export class Repo {
     if (this.fileCacheMap.has(filePath)) {
       return this.fileCacheMap.get(filePath) as string;
     }
-
-    const file = this.files.find((file) => file.path === filePath);
 
     let handle: FileSystemFileHandle | undefined = file?.handle;
 
