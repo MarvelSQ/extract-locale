@@ -17,6 +17,12 @@ import {
 import { cn } from "@/lib/utils";
 import { Eye, PanelRightClose, PanelRightOpen, Save } from "lucide-react";
 import { useLayoutEffect, useMemo, useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 
 function Preview({
   repo,
@@ -109,10 +115,21 @@ function Preview({
           Preview
         </Button>
         <div className="flex-grow flex flex-row justify-end gap-2">
-          <Button size="sm" variant="outline">
-            <Save className="mr-1" size={16} />
-            Save to Local
-          </Button>
+          <TooltipProvider>
+            <Tooltip open={repo === "demo" && undefined}>
+              <TooltipTrigger>
+                <Button size="sm" variant="outline" disabled={repo === "demo"}>
+                  <Save className="mr-1" size={16} />
+                  Save to Local
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-sm text-muted-foreground">
+                  this feature is not available in demo mode
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <Button
             size="sm"
             variant="outline"
