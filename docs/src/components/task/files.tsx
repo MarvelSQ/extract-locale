@@ -9,7 +9,13 @@ import {
 } from "../ui/table";
 import { useFileTasks } from "@/filesystem/queries";
 
-function Files({ repo }: { repo: string }) {
+function Files({
+  repo,
+  onFileClick,
+}: {
+  repo: string;
+  onFileClick: (file: string) => void;
+}) {
   const tasks = useFileTasks(repo);
 
   return (
@@ -23,7 +29,7 @@ function Files({ repo }: { repo: string }) {
       </TableHeader>
       <TableBody>
         {tasks.data?.map((file) => (
-          <TableRow key={file.path}>
+          <TableRow key={file.path} onClick={() => onFileClick(file.path)}>
             <TableCell className="font-medium">{file.path}</TableCell>
             <TableCell className="text-right">
               {"tasks" in file.result && file.result.tasks.length}

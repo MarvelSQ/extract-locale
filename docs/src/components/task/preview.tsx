@@ -18,7 +18,15 @@ import { cn } from "@/lib/utils";
 import { Eye, PanelRightClose, PanelRightOpen, Save } from "lucide-react";
 import { useLayoutEffect, useMemo, useState } from "react";
 
-function Preview({ repo }: { repo: string }) {
+function Preview({
+  repo,
+  file,
+  onFileChange,
+}: {
+  repo: string;
+  file: string | null;
+  onFileChange: (file: string) => void;
+}) {
   const [theme, setTheme] = useState<"dark" | "light">();
 
   useLayoutEffect(() => {
@@ -49,7 +57,7 @@ function Preview({ repo }: { repo: string }) {
     };
   }, []);
 
-  const [active, setActive] = useState<string | null>(null);
+  // const [active, setActive] = useState<string | null>(file);
 
   const files = useFiles(repo);
 
@@ -59,7 +67,7 @@ function Preview({ repo }: { repo: string }) {
     return files.data?.[0]?.path;
   }, [files.data]);
 
-  const activePath = active || defaultActive;
+  const activePath = file || defaultActive;
 
   const fileContent = useFileContent(repo, activePath);
 
@@ -82,7 +90,7 @@ function Preview({ repo }: { repo: string }) {
       })}
     >
       <div className="flex flex-row gap-2 items-center">
-        <Select value={activePath} onValueChange={setActive}>
+        <Select value={activePath} onValueChange={(file) => onFileChange(file)}>
           <SelectTrigger className="w-auto flex-grow-0">
             <SelectValue placeholder="select..." />
           </SelectTrigger>

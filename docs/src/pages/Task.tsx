@@ -31,7 +31,7 @@ import {
   Trash,
 } from "lucide-react";
 import Preview from "../components/task/preview";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import Fileselector from "@/components/task/fileselector";
 import React, { useState } from "react";
 import { openDialog } from "@/lib/modal";
@@ -42,6 +42,7 @@ type CardProps = React.ComponentProps<typeof Card>;
 
 export function Task() {
   const match = useParams();
+  const [search, setSearch] = useSearchParams();
   const navigate = useNavigate();
 
   const repos = useRepos();
@@ -169,10 +170,21 @@ export function Task() {
             <Detail />
           </TabsContent>
           <TabsContent value="files">
-            <Files repo={match.repo as string} />
+            <Files
+              repo={match.repo as string}
+              onFileClick={(file) => {
+                navigate("/repo/" + match.repo + "/preview?file=" + file);
+              }}
+            />
           </TabsContent>
           <TabsContent value="preview">
-            <Preview repo={match.repo as string} />
+            <Preview
+              repo={match.repo as string}
+              file={search.get("file")}
+              onFileChange={(file) => {
+                setSearch({ file });
+              }}
+            />
           </TabsContent>
         </Tabs>
         {/* <div className="flex flex-row gap-8 items-stretch">
