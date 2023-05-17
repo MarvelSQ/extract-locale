@@ -1,5 +1,6 @@
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Languages } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Github, Languages } from "lucide-react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 
 export function Root() {
@@ -17,7 +18,15 @@ export function Root() {
               </Link>
             )}
           </div>
-          <div className=" flex-grow flex justify-end">
+          <div className=" flex-grow flex justify-end gap-2">
+            <Button variant="link" asChild>
+              <a
+                target="_blank"
+                href="https://github.com/MarvelSQ/extract-locale"
+              >
+                <Github />
+              </a>
+            </Button>
             <ThemeToggle />
           </div>
         </div>
