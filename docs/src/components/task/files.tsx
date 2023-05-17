@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -8,14 +7,10 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { loadFiles, SimpleFile } from "@/Task/loadFiles";
-import { Loader2 } from "lucide-react";
-import { useFiles } from "@/filesystem/queries";
-
-const demoFiles = loadFiles("demo");
+import { useFileTasks } from "@/filesystem/queries";
 
 function Files({ repo }: { repo: string }) {
-  const files = useFiles(repo);
+  const tasks = useFileTasks(repo);
 
   return (
     <Table>
@@ -23,19 +18,15 @@ function Files({ repo }: { repo: string }) {
       <TableHeader>
         <TableRow>
           <TableHead className="w-[100px]">name</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
+          <TableHead className="text-right">Text Match Count</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {files.data?.map((file) => (
+        {tasks.data?.map((file) => (
           <TableRow key={file.path}>
             <TableCell className="font-medium">{file.path}</TableCell>
-            <TableCell>
-              <Loader2 className="animate-spin" />
-            </TableCell>
             <TableCell className="text-right">
-              <Loader2 className="animate-spin inline-block" />
+              {"tasks" in file.result && file.result.tasks.length}
             </TableCell>
           </TableRow>
         ))}

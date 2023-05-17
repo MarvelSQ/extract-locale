@@ -160,6 +160,8 @@ export async function openHandle(name: string) {
     if (result && result.name === name) {
       repo.handle = result.handle;
       repoQueryClient.invalidateQueries(["GET_FILE_CONTENT", name]);
+      repoQueryClient.invalidateQueries(["GET_FILE_TASK", name]);
+      repoQueryClient.invalidateQueries(["GET_FILE_TASKS"]);
       return result;
     }
   }
@@ -200,12 +202,41 @@ export function getFileTask(name: string, filePath: string) {
   return repo.tasks.find((task) => task.path === filePath)?.result;
 }
 
-export function useFileTasks(name: string, filePath?: string) {
+export function useFileTask(name: string, filePath?: string) {
   const fileTasks = useQuery(
-    ["GET_FILE_TASKS", name, filePath],
+    ["GET_FILE_TASK", name, filePath],
     () => getFileTask(name, filePath as string),
     {
       enabled: !!filePath,
+      retry: false,
+    }
+  );
+
+  return fileTasks;
+}
+
+function getFileTasks(name: string) {
+  const repo = getRepo(name);
+
+  if (!repo) {
+    throw new Error("Repo not found");
+  }
+
+  return Promise.all(
+    repo.tasks.map((task) => {
+      return task.result.then((result) => ({
+        path: task.path,
+        result,
+      }));
+    })
+  );
+}
+
+export function useFileTasks(name: string) {
+  const fileTasks = useQuery(
+    ["GET_FILE_TASKS", name],
+    () => getFileTasks(name),
+    {
       retry: false,
     }
   );

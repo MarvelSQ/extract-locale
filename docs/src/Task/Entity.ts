@@ -92,6 +92,12 @@ export class Repo {
     return content;
   }
 
+  private cbs: (() => void)[] = [];
+
+  onTasksFinished(cb: () => void) {
+    this.cbs.push(cb);
+  }
+
   public tasks: {
     path: string;
     result: Promise<
@@ -126,6 +132,9 @@ export class Repo {
         console.log(results);
         console.log("done");
         this.config = config;
+
+        this.cbs.forEach((cb) => cb());
+        this.cbs = [];
       }
     );
 

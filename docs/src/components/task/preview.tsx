@@ -11,7 +11,7 @@ import {
 import {
   openHandle,
   useFileContent,
-  useFileTasks,
+  useFileTask,
   useFiles,
 } from "@/filesystem/queries";
 import { cn } from "@/lib/utils";
@@ -63,7 +63,7 @@ function Preview({ repo }: { repo: string }) {
 
   const fileContent = useFileContent(repo, activePath);
 
-  const fileTasks = useFileTasks(repo, activePath);
+  const fileTasks = useFileTask(repo, activePath);
 
   const error =
     fileTasks.data &&
