@@ -16,6 +16,14 @@ import { getRepos, repoQueryClient } from "./filesystem/queries";
 
 const repos = getRepos();
 
+const RedirectRoute = () => {
+  const params = new URLSearchParams(window.location.search);
+
+  const path = params.get("path");
+
+  return <Navigate to={path ? `/${path}` : "/"} />;
+};
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -32,6 +40,10 @@ const router = createBrowserRouter([
       {
         path: "repo/:repo/:tab",
         element: <Task />,
+      },
+      {
+        path: "index.html",
+        element: <RedirectRoute />,
       },
     ],
   },
