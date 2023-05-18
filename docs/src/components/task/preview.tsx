@@ -67,6 +67,8 @@ function Preview({
       ? fileTasks.data.tasks
       : undefined;
 
+  const isEmpty = tasks?.length === 0;
+
   return (
     <div
       className={cn("flex flex-col gap-2 group w-full", {
@@ -94,16 +96,22 @@ function Preview({
         </Button>
         <div className="flex-grow flex flex-row justify-end gap-2">
           <TooltipProvider>
-            <Tooltip open={repo === "demo" && undefined}>
+            <Tooltip open={(repo === "demo" || isEmpty) && undefined}>
               <TooltipTrigger>
-                <Button size="sm" variant="outline" disabled={repo === "demo"}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={repo === "demo" || isEmpty}
+                >
                   <Save className="mr-1" size={16} />
                   Save to Local
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
                 <p className="text-sm text-muted-foreground">
-                  this feature is not available in demo mode
+                  {isEmpty
+                    ? "no matches to save"
+                    : "this feature is not available in demo mode"}
                 </p>
               </TooltipContent>
             </Tooltip>
