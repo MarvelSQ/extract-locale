@@ -15,7 +15,13 @@ import {
   useFiles,
 } from "@/filesystem/queries";
 import { cn } from "@/lib/utils";
-import { Eye, PanelRightClose, PanelRightOpen, Save } from "lucide-react";
+import {
+  Eye,
+  Loader2,
+  PanelRightClose,
+  PanelRightOpen,
+  Save,
+} from "lucide-react";
 import { useLayoutEffect, useMemo, useState } from "react";
 import {
   Tooltip,
@@ -63,13 +69,13 @@ function Preview({
 
   return (
     <div
-      className={cn("flex flex-col gap-2 group", {
+      className={cn("flex flex-col gap-2 group w-full", {
         "show-panel": showPanel,
       })}
     >
-      <div className="flex flex-row gap-2 items-center">
+      <div className="flex flex-row gap-2 items-center sticky top-16">
         <Select value={activePath} onValueChange={(file) => onFileChange(file)}>
-          <SelectTrigger className="w-auto flex-grow-0">
+          <SelectTrigger className="w-auto flex-grow-0 bg-background">
             <SelectValue placeholder="select..." />
           </SelectTrigger>
           <SelectContent className="max-h-[400px]">
@@ -117,64 +123,77 @@ function Preview({
           </Button>
         </div>
       </div>
-      <div className="flex flex-row gap-4 w-full">
-        <div className="flex-grow overflow-auto">
-          {(fileContent.error as Error | undefined)?.message ===
-          "No directory handle" ? (
-            <p className="text-sm text-muted-foreground">
-              there is no live preview for this file, you can click{" "}
-              <Button
-                variant="link"
-                onClick={() => {
-                  openHandle(repo);
-                }}
-              >
-                here
-              </Button>{" "}
-              to get the file
-            </p>
-          ) : (
-            <Code theme={theme}>{fileContent.data as string}</Code>
-          )}
+      {fileContent.isLoading ? (
+        <div className="flex-grow w-full flex flex-row items-center justify-center">
+          <Loader2 className="animate-spin" size={60} />
         </div>
-        <Card className="hidden group-[.show-panel]:block w-[300px]">
-          <CardHeader>
-            <CardTitle>Text Matches</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && (
-              <p className="text-sm text-muted-foreground">{error.message}</p>
-            )}
-            {tasks?.length === 0 && (
-              <p className="text-sm text-muted-foreground">no matches found</p>
-            )}
-            {tasks?.map((task) => {
-              return (
-                <div
-                  key={task.match.start}
-                  className="flex flex-col gap-1 border-b border-accent pb-1"
+      ) : (
+        <div className="flex-grow flex flex-row gap-4 w-full">
+          <div className="flex-grow overflow-auto">
+            {(fileContent.error as Error | undefined)?.message ===
+            "No directory handle" ? (
+              <p className="text-sm text-muted-foreground">
+                there is no live preview for this file, you can click{" "}
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    openHandle(repo);
+                  }}
                 >
-                  <p className="text-sm text-muted-foreground">
-                    "
-                    {Array.isArray(task.match.text)
-                      ? task.match.text.join("[]")
-                      : task.match.text}
-                    "
-                  </p>
-                  <div className="flex flex-row gap-1">
-                    <span className="text-xs rounded bg-accent-foreground text-accent p-1">
-                      {task.localeKey}
-                    </span>
-                    <span className="text-xs rounded bg-accent-foreground text-accent p-1">
-                      {task.match.type}
-                    </span>
+                  here
+                </Button>{" "}
+                to get the file
+              </p>
+            ) : (
+              <Code theme={theme}>{fileContent.data as string}</Code>
+            )}
+          </div>
+          <Card
+            className="shrink-0 hidden group-[.show-panel]:block w-[300px] sticky top-28 overflow-auto"
+            style={{
+              maxHeight: "calc(100vh - 8.5rem)",
+            }}
+          >
+            <CardHeader className="sticky top-0 bg-background">
+              <CardTitle>Text Matches</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <p className="text-sm text-muted-foreground">{error.message}</p>
+              )}
+              {tasks?.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  no matches found
+                </p>
+              )}
+              {tasks?.map((task) => {
+                return (
+                  <div
+                    key={task.match.start}
+                    className="flex flex-col gap-1 border-b border-accent pb-1"
+                  >
+                    <p className="text-sm text-muted-foreground">
+                      "
+                      {Array.isArray(task.match.text)
+                        ? task.match.text.join("[]")
+                        : task.match.text}
+                      "
+                    </p>
+                    <div className="flex flex-row gap-1">
+                      <span className="text-xs rounded bg-accent-foreground text-accent p-1">
+                        {task.localeKey}
+                      </span>
+                      <span className="text-xs rounded bg-accent-foreground text-accent p-1">
+                        {task.match.type}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -153,13 +153,18 @@ export function Task() {
           </div>
         </div>
       </div>
-      <div className="container flex flex-col items-start py-8 overflow-auto">
+      <div
+        className="container flex flex-row items-start py-8"
+        style={{
+          width: "calc(100vw - 300px)",
+        }}
+      >
         <Tabs
           value={match.tab || "detail"}
           onValueChange={(event) => {
             navigate(`/repo/${match.repo}/${event}`);
           }}
-          className="flex flex-col self-stretch"
+          className="flex flex-col self-stretch w-full"
         >
           <TabsList className="grid grid-cols-3 w-[300px]">
             <TabsTrigger value="detail">Detail</TabsTrigger>
@@ -177,7 +182,10 @@ export function Task() {
               }}
             />
           </TabsContent>
-          <TabsContent value="preview">
+          <TabsContent
+            value="preview"
+            className="flex-grow flex flex-row items-stretch"
+          >
             <Preview
               repo={match.repo as string}
               file={search.get("file")}
