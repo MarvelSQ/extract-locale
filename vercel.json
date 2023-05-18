@@ -1,12 +1,8 @@
 {
   "redirects": [
     {
-      "source": "/repo/:path*",
+      "source": "/:path*",
       "destination": "/index.html?path=:path*"
-    },
-    {
-      "source": "/:path",
-      "destination": "/"
     }
   ]
 }
