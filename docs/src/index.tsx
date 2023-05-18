@@ -19,7 +19,7 @@ const RedirectRoute = () => {
 
   const path = params.get("path");
 
-  return <Navigate to={path ? `/${path}` : "/"} />;
+  return <Navigate to={path ? `/repo/${path}` : "/"} />;
 };
 
 const router = createBrowserRouter([
