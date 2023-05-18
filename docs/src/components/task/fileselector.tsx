@@ -6,7 +6,7 @@ import { DialogHeader } from "../ui/dialog";
 import { DialogTitle } from "../ui/dialog";
 import { DialogDescription } from "../ui/dialog";
 import { DialogFooter } from "../ui/dialog";
-import { Transfer, Tree } from "antd";
+import { Transfer, Tree, ConfigProvider, theme } from "antd";
 import { generateTree, getHistory } from "@/filesystem/utils";
 import {
   Tooltip,
@@ -14,6 +14,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { useTheme } from "../hooks/useTheme";
+
+const { defaultAlgorithm, darkAlgorithm } = theme;
 
 const defaultRegExp = /^src.+tsx?$/;
 
@@ -37,6 +40,8 @@ function Fileselector({
   onConfirm: (val: string[]) => void;
 }) {
   console.log("open", open);
+
+  const theme = useTheme();
 
   const history = useMemo(() => getHistory(directory), [directory]);
 
@@ -146,50 +151,59 @@ function Fileselector({
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col h-[500px] overflow-hidden">
-          <Transfer
-            className="file-selector h-[500px]"
-            dataSource={files}
-            targetKeys={targetKeys}
-            onChange={handleChange}
-            onSelectChange={handleSelect}
-            showSearch
-            render={renderTitle}
-          >
-            {({ direction, onItemSelect, onItemSelectAll, selectedKeys }) => {
-              if (direction === "left") {
-                const checkedKeys = [...selectedKeys, ...targetKeys];
-                return (
-                  <Tree.DirectoryTree
-                    checkable
-                    // checkStrictly
-                    checkedKeys={checkedKeys}
-                    // selectedKeys={checkedKeys}
-                    onCheck={(_, { node: { key, children }, checked }) => {
-                      if (children) {
-                        const subKeys = files
-                          .filter((file) => file.key.startsWith(key))
-                          .map((file) => file.key);
-
-                        onItemSelectAll(subKeys, checked);
-                      } else {
-                        onItemSelect(key as string, checked);
-                      }
-                    }}
-                    onSelect={(_, { node }) => {
-                      if (node.children) {
-                        return;
-                      }
-                      onItemSelect(node.key, !isChecked(checkedKeys, node.key));
-                    }}
-                    treeData={treeFiles}
-                    fieldNames={{
-                      title: "name",
-                    }}
-                  />
-                );
-              }
+          <ConfigProvider
+            theme={{
+              algorithm: theme === "dark" ? darkAlgorithm : defaultAlgorithm,
             }}
-          </Transfer>
+          >
+            <Transfer
+              className="file-selector h-[500px]"
+              dataSource={files}
+              targetKeys={targetKeys}
+              onChange={handleChange}
+              onSelectChange={handleSelect}
+              showSearch
+              render={renderTitle}
+            >
+              {({ direction, onItemSelect, onItemSelectAll, selectedKeys }) => {
+                if (direction === "left") {
+                  const checkedKeys = [...selectedKeys, ...targetKeys];
+                  return (
+                    <Tree.DirectoryTree
+                      checkable
+                      // checkStrictly
+                      checkedKeys={checkedKeys}
+                      // selectedKeys={checkedKeys}
+                      onCheck={(_, { node: { key, children }, checked }) => {
+                        if (children) {
+                          const subKeys = files
+                            .filter((file) => file.key.startsWith(key))
+                            .map((file) => file.key);
+
+                          onItemSelectAll(subKeys, checked);
+                        } else {
+                          onItemSelect(key as string, checked);
+                        }
+                      }}
+                      onSelect={(_, { node }) => {
+                        if (node.children) {
+                          return;
+                        }
+                        onItemSelect(
+                          node.key,
+                          !isChecked(checkedKeys, node.key)
+                        );
+                      }}
+                      treeData={treeFiles}
+                      fieldNames={{
+                        title: "name",
+                      }}
+                    />
+                  );
+                }
+              }}
+            </Transfer>
+          </ConfigProvider>
         </div>
         <DialogFooter>
           <Button variant="secondary" onClick={onClose}>

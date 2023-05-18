@@ -23,6 +23,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import { useTheme } from "../hooks/useTheme";
 
 function Preview({
   repo,
@@ -33,36 +34,7 @@ function Preview({
   file: string | null;
   onFileChange: (file: string) => void;
 }) {
-  const [theme, setTheme] = useState<"dark" | "light">();
-
-  useLayoutEffect(() => {
-    const handleChange = () => {
-      // check html classlist
-      const html = document.querySelector("html");
-      if (html) {
-        const classList = html.classList;
-        if (classList.contains("dark")) {
-          setTheme("dark");
-        } else {
-          setTheme("light");
-        }
-      }
-    };
-
-    const mutationObserver = new MutationObserver(handleChange);
-
-    mutationObserver.observe(document.querySelector("html")!, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
-
-    handleChange();
-
-    return () => {
-      mutationObserver.disconnect();
-    };
-  }, []);
-
+  const theme = useTheme();
   // const [active, setActive] = useState<string | null>(file);
 
   const files = useFiles(repo);
