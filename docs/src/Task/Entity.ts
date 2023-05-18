@@ -114,6 +114,7 @@ export class Repo {
           error: any;
         }
     >;
+    saved?: boolean;
   }[] = [];
 
   executeTask(config: any) {
@@ -149,6 +150,24 @@ export class Repo {
     this.tasks = fileTasks;
 
     return fileTasks;
+  }
+
+  async saveFile(filePath: string) {
+    const file = this.files.find((file) => file.path === filePath);
+    // const content = await this.getFileContent(filePath);
+
+    const task = this.tasks.find((task) => task.path === filePath);
+
+    if (file?.handle && task?.result) {
+      const { toString } = await task.result;
+
+      await file.handle.createWritable().then((writable) => {
+        writable.write(toString());
+        writable.close();
+
+        task.saved = true;
+      });
+    }
   }
 
   toJSON() {

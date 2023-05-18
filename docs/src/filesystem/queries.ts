@@ -1,4 +1,4 @@
-import { useQuery, QueryClient } from "@tanstack/react-query";
+import { useQuery, QueryClient, useMutation } from "@tanstack/react-query";
 import { openExtractLocale } from ".";
 import * as Task from "@/Task/init";
 import { Repo } from "@/Task/Entity";
@@ -163,8 +163,11 @@ export async function openHandle(name: string) {
     if (result && result.name === name) {
       repo.handle = result.handle;
       repoQueryClient.invalidateQueries(["GET_FILE_CONTENT", name]);
-      repoQueryClient.invalidateQueries(["GET_FILE_TASK", name]);
-      repoQueryClient.invalidateQueries(["GET_FILE_TASKS"]);
+      // inside handle setter, tasks will be executed in next tick, so we need to invalidate queries in next tick
+      Promise.resolve().then(() => {
+        repoQueryClient.invalidateQueries(["GET_FILE_TASK", name]);
+        repoQueryClient.invalidateQueries(["GET_FILE_TASKS", name]);
+      });
       return result;
     }
   }
@@ -202,11 +205,27 @@ export function getFileTask(name: string, filePath: string) {
     throw new Error("Repo not found");
   }
 
-  return repo.tasks.find((task) => task.path === filePath)?.result;
+  const result = repo.tasks.find((task) => task.path === filePath)?.result;
+
+  if (!result) {
+    throw new Error("Task not found");
+  }
+
+  return result;
+}
+
+function saveFile(name: string, filePath: string) {
+  const repo = getRepo(name);
+
+  if (!repo) {
+    throw new Error("Repo not found");
+  }
+
+  return repo.saveFile(filePath);
 }
 
 export function useFileTask(name: string, filePath?: string) {
-  const fileTasks = useQuery(
+  const fileTask = useQuery(
     ["GET_FILE_TASK", name, filePath],
     () => getFileTask(name, filePath as string),
     {
@@ -215,7 +234,14 @@ export function useFileTask(name: string, filePath?: string) {
     }
   );
 
-  return fileTasks;
+  const save = useMutation(() => saveFile(name, filePath as string), {
+    onSuccess: () => {
+      repoQueryClient.invalidateQueries(["GET_FILE_TASK", name]);
+      repoQueryClient.invalidateQueries(["GET_FILE_TASKS", name]);
+    },
+  });
+
+  return { task: fileTask, save };
 }
 
 function getFileTasks(name: string) {
@@ -230,6 +256,7 @@ function getFileTasks(name: string) {
       return task.result.then((result) => ({
         path: task.path,
         result,
+        saved: task.saved,
       }));
     })
   );

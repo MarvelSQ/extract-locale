@@ -12,6 +12,7 @@ import {
   openHandle,
   useFileContent,
   useFileTask,
+  useFileTasks,
   useFiles,
 } from "@/filesystem/queries";
 import { cn } from "@/lib/utils";
@@ -55,17 +56,19 @@ function Preview({
 
   const fileContent = useFileContent(repo, activePath);
 
-  const fileTasks = useFileTask(repo, activePath);
+  const fileTasks = useFileTasks(repo);
 
-  const error =
-    fileTasks.data &&
-    "error" in fileTasks.data &&
-    (fileTasks.data.error as Error);
+  const currentFileTask = fileTasks.data?.find(
+    (task) => task.path === activePath
+  );
 
-  const tasks =
-    fileTasks.data && "tasks" in fileTasks.data
-      ? fileTasks.data.tasks
-      : undefined;
+  const isSaved = currentFileTask?.saved;
+
+  const { task, save } = useFileTask(repo, activePath);
+
+  const error = task.data && "error" in task.data && (task.data.error as Error);
+
+  const tasks = task.data && "tasks" in task.data ? task.data.tasks : undefined;
 
   const isEmpty = tasks?.length === 0;
 
@@ -101,10 +104,15 @@ function Preview({
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={repo === "demo" || isEmpty}
+                  disabled={
+                    repo === "demo" || isEmpty || save.isLoading || isSaved
+                  }
+                  onClick={() => {
+                    save.mutateAsync();
+                  }}
                 >
                   <Save className="mr-1" size={16} />
-                  Save to Local
+                  {isSaved ? "Saved" : "Save to Local"}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -116,6 +124,29 @@ function Preview({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          {isSaved && (
+            <Button
+              onClick={() => {
+                const currentIndex = fileTasks.data?.findIndex(
+                  (task) => task.path === activePath
+                );
+
+                const nextFileTask = fileTasks.data?.find(
+                  (task, index) =>
+                    index > (currentIndex || 0) &&
+                    !task.saved &&
+                    "tasks" in task.result &&
+                    task.result.tasks.length > 0
+                );
+
+                if (nextFileTask) {
+                  onFileChange(nextFileTask.path);
+                }
+              }}
+            >
+              next <span className="hidden md:inline ml-1">file</span>
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
