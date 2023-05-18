@@ -3,6 +3,10 @@
     {
       "source": "/repo/:path*",
       "destination": "/index.html?path=:path*"
+    },
+    {
+      "source": "*",
+      "destination": "/"
     }
   ]
 }
