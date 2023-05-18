@@ -5,7 +5,7 @@
       "destination": "/index.html?path=:path*"
     },
     {
-      "source": "*",
+      "source": "/:path",
       "destination": "/"
     }
   ]
