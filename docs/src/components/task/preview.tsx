@@ -72,6 +72,15 @@ function Preview({
 
   const isEmpty = tasks?.length === 0;
 
+  const [showPreview, setShowPreview] = useState(true);
+
+  const content = useMemo(() => {
+    if (showPreview && !isEmpty) {
+      return task.data?.toString() || fileContent.data || "";
+    }
+    return fileContent.data || "";
+  }, [fileContent.data, task.data, isEmpty, showPreview]);
+
   return (
     <div
       className={cn("flex flex-col gap-2 group w-full", {
@@ -93,7 +102,13 @@ function Preview({
             })}
           </SelectContent>
         </Select>
-        <Button size="sm">
+        <Button
+          size="sm"
+          variant={showPreview ? "default" : "ghost"}
+          onClick={() => {
+            setShowPreview(!showPreview);
+          }}
+        >
           <Eye className="mr-1" size={16} />
           Preview
         </Button>
@@ -184,7 +199,7 @@ function Preview({
                 to get the file
               </p>
             ) : (
-              <Code theme={theme}>{fileContent.data as string}</Code>
+              <Code theme={theme}>{content}</Code>
             )}
           </div>
           <Card
