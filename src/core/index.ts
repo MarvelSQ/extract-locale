@@ -1,4 +1,11 @@
-import { Plugin, FileTask, HelperResult, LocaleTask, FileHandle, TextMatch } from "../type";
+import {
+  Plugin,
+  FileTask,
+  HelperResult,
+  LocaleTask,
+  FileHandle,
+  TextMatch,
+} from "../type";
 
 import { Matcher } from "../matcher";
 import { renderTasks } from "./render";
@@ -40,7 +47,9 @@ export function createReplacer({
         }
         if (sentence.type in p.template) {
           const temp = p.template[sentence.type as keyof typeof p.template];
-          return typeof temp === "function" ? temp(context, sentence) : temp as string;
+          return typeof temp === "function"
+            ? temp(context, sentence)
+            : (temp as string);
         }
       },
     };
@@ -76,7 +85,7 @@ export function createReplacer({
             inject: plugin.inject,
             result: context,
             template: plugin.template,
-          }
+          },
         ];
       },
       [] as {
@@ -99,10 +108,7 @@ export function createReplacer({
 
         const task: LocaleTask = {
           match: sentence,
-          localeKey: assignee.getLocaleKey(
-            sentence.text,
-            filepath
-          ),
+          localeKey: assignee.getLocaleKey(sentence.text, filepath),
           context: {},
           extra: {},
           effects: [],
@@ -144,7 +150,7 @@ export function createReplacer({
           fileContext,
           ...handle,
           context: {
-            ...result
+            ...result,
           },
         };
 
@@ -174,7 +180,7 @@ export function createReplacer({
         if (templateStr) {
           processed = true;
 
-          handle.replace(sentence.start, sentence.end,templateStr);
+          handle.replace(sentence.start, sentence.end, templateStr);
 
           task.postEffects = [];
 
@@ -211,8 +217,8 @@ export function createReplacer({
     return {
       tasks,
       fileTasks,
-      toString() {
-        return renderTasks(tasks, fileTasks, fileContent);
+      toString(alterdTasks: LocaleTask[] = tasks) {
+        return renderTasks(alterdTasks, fileTasks, fileContent);
       },
     };
   };
