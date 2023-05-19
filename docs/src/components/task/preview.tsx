@@ -17,11 +17,15 @@ import {
 } from "@/filesystem/queries";
 import { cn } from "@/lib/utils";
 import {
+  Edit,
   Eye,
   Loader2,
   PanelRightClose,
   PanelRightOpen,
   Save,
+  Square,
+  Trash,
+  XSquare,
 } from "lucide-react";
 import { useLayoutEffect, useMemo, useState } from "react";
 import {
@@ -31,15 +35,34 @@ import {
   TooltipTrigger,
 } from "../ui/tooltip";
 import { useTheme } from "../hooks/useTheme";
+import { Checkbox } from "../ui/checkbox";
 
 function Preview({
   repo,
   file,
   onFileChange,
+  fileTaskPatch,
+  onFileTaskPatchChange,
 }: {
   repo: string;
   file: string | null;
   onFileChange: (file: string) => void;
+  fileTaskPatch: Record<
+    string,
+    Record<
+      string,
+      {
+        disable?: boolean;
+      }
+    >
+  >;
+  onFileTaskPatchChange: (
+    filename: string,
+    id: string,
+    patch: {
+      disable: boolean;
+    }
+  ) => void;
 }) {
   const theme = useTheme();
   // const [active, setActive] = useState<string | null>(file);
@@ -76,10 +99,19 @@ function Preview({
 
   const content = useMemo(() => {
     if (showPreview && !isEmpty) {
-      return task.data?.toString() || fileContent.data || "";
+      return (
+        task.data?.toString(
+          tasks?.filter((task) => {
+            return !fileTaskPatch[activePath as string]?.[task.match.start]
+              ?.disable;
+          })
+        ) ||
+        fileContent.data ||
+        ""
+      );
     }
     return fileContent.data || "";
-  }, [fileContent.data, task.data, isEmpty, showPreview]);
+  }, [fileContent.data, task.data, isEmpty, showPreview, fileTaskPatch, tasks]);
 
   return (
     <div
@@ -123,7 +155,13 @@ function Preview({
                     repo === "demo" || isEmpty || save.isLoading || isSaved
                   }
                   onClick={() => {
-                    save.mutateAsync();
+                    save.mutateAsync(
+                      tasks?.filter((task) => {
+                        return !fileTaskPatch[activePath as string]?.[
+                          task.match.start
+                        ]?.disable;
+                      })
+                    );
                   }}
                 >
                   <Save className="mr-1" size={16} />
@@ -224,9 +262,42 @@ function Preview({
                 return (
                   <div
                     key={task.match.start}
-                    className="flex flex-col gap-1 border-b border-accent pb-1"
+                    className={cn(
+                      "flex flex-col gap-1 border-b border-accent pb-1 relative group/match-text",
+                      {
+                        disable:
+                          fileTaskPatch[activePath as string]?.[
+                            task.match.start
+                          ]?.disable,
+                      }
+                    )}
                   >
-                    <p className="text-sm text-muted-foreground">
+                    <Edit className="absolute bottom-1 right-1 p-1 rounded hover:bg-accent cursor-pointer" />
+                    <Square
+                      className="group-[.disable]/match-text:hidden absolute bottom-1 right-8 p-1 rounded hover:bg-accent cursor-pointer"
+                      onClick={() => {
+                        onFileTaskPatchChange(
+                          activePath as string,
+                          `${task.match.start}`,
+                          {
+                            disable: true,
+                          }
+                        );
+                      }}
+                    />
+                    <XSquare
+                      className="hidden group-[.disable]/match-text:block absolute bottom-1 right-8 p-1 rounded hover:bg-accent cursor-pointer"
+                      onClick={() => {
+                        onFileTaskPatchChange(
+                          activePath as string,
+                          `${task.match.start}`,
+                          {
+                            disable: false,
+                          }
+                        );
+                      }}
+                    />
+                    <p className="text-sm text-muted-foreground group-[.disable]/match-text:line-through">
                       "
                       {Array.isArray(task.match.text)
                         ? task.match.text.join("[]")

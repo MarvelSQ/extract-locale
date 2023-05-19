@@ -2,6 +2,7 @@ import { useQuery, QueryClient, useMutation } from "@tanstack/react-query";
 import { openExtractLocale } from ".";
 import * as Task from "@/Task/init";
 import { Repo } from "@/Task/Entity";
+import { LocaleTask } from "../../../src/type";
 
 export const repoQueryClient = new QueryClient({
   defaultOptions: {
@@ -214,14 +215,14 @@ export function getFileTask(name: string, filePath: string) {
   return result;
 }
 
-function saveFile(name: string, filePath: string) {
+function saveFile(name: string, filePath: string, tasks: LocaleTask[]) {
   const repo = getRepo(name);
 
   if (!repo) {
     throw new Error("Repo not found");
   }
 
-  return repo.saveFile(filePath);
+  return repo.saveFile(filePath, tasks);
 }
 
 export function useFileTask(name: string, filePath?: string) {
@@ -234,12 +235,15 @@ export function useFileTask(name: string, filePath?: string) {
     }
   );
 
-  const save = useMutation(() => saveFile(name, filePath as string), {
-    onSuccess: () => {
-      repoQueryClient.invalidateQueries(["GET_FILE_TASK", name]);
-      repoQueryClient.invalidateQueries(["GET_FILE_TASKS", name]);
-    },
-  });
+  const save = useMutation(
+    (tasks: LocaleTask[]) => saveFile(name, filePath as string, tasks),
+    {
+      onSuccess: () => {
+        repoQueryClient.invalidateQueries(["GET_FILE_TASK", name]);
+        repoQueryClient.invalidateQueries(["GET_FILE_TASKS", name]);
+      },
+    }
+  );
 
   return { task: fileTask, save };
 }

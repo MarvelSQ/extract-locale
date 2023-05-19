@@ -1,5 +1,6 @@
 import { getFile } from "@/filesystem/utils";
 import { DefaultSettings, withReact } from "../../../src/preset/react";
+import { LocaleTask } from "../../../src/type";
 
 export class Repo {
   public name: string = "";
@@ -152,7 +153,7 @@ export class Repo {
     return fileTasks;
   }
 
-  async saveFile(filePath: string) {
+  async saveFile(filePath: string, tasks: LocaleTask[]) {
     const file = this.files.find((file) => file.path === filePath);
     // const content = await this.getFileContent(filePath);
 
@@ -162,7 +163,7 @@ export class Repo {
       const { toString } = await task.result;
 
       await file.handle.createWritable().then((writable) => {
-        writable.write(toString());
+        writable.write(toString(tasks));
         writable.close();
 
         task.saved = true;

@@ -49,6 +49,18 @@ export function Task() {
 
   const [edit, setEdit] = useState(false);
 
+  const [fileTaskPatch, setFileTaskPatch] = useState<
+    Record<
+      string,
+      Record<
+        string,
+        {
+          disable?: boolean;
+        }
+      >
+    >
+  >({});
+
   return (
     <div className="flex-grow flex flex-row">
       <div
@@ -189,6 +201,22 @@ export function Task() {
             <Preview
               repo={match.repo as string}
               file={search.get("file")}
+              fileTaskPatch={fileTaskPatch}
+              onFileTaskPatchChange={(file, id, patch) => {
+                setFileTaskPatch((prev) => {
+                  const newPatch = {
+                    ...prev,
+                    [file]: {
+                      ...prev[file],
+                      [id]: {
+                        ...prev[file]?.[id],
+                        ...patch,
+                      },
+                    },
+                  };
+                  return newPatch;
+                });
+              }}
               onFileChange={(file) => {
                 setSearch({ file });
               }}
