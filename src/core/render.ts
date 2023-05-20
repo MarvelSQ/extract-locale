@@ -1,6 +1,89 @@
 import MagicString from "magic-string";
-import { FileTask, LocaleTask, SentenceType } from "../type";
+import { Effection, FileTask, LocaleTask, SentenceType } from "../type";
 import { renderTemplate } from "../utils/template";
+
+function renderTask(task: LocaleTask) {
+  const { match, localeKey, effects, postEffects, context: rawContext } = task;
+
+  const context = {
+    ...rawContext,
+    localeKey,
+  };
+
+  const renderContext = {
+    ...context,
+    isJSXText: match.type === SentenceType.JSXText,
+    isJSXAttributeText: match.type === SentenceType.JSXAttributeText,
+    isLiteral: match.type === SentenceType.Literal,
+    isTemplateLiteral: match.type === SentenceType.TemplateLiteral,
+  };
+
+  const partRandom = `------${Math.random()}-----`;
+  const parts = `\\{ ${match.parts
+    .map((e) => `${e.name}: ${partRandom}`)
+    .join(", ")} \\}`;
+
+  function renderEffect(effect: Effection): Effection[] {
+    const { text, type } = effect;
+
+    const rendered = renderTemplate(text, {
+      ...renderContext,
+      parts: match.parts.length ? parts : "",
+    });
+
+    if (type === "insert") {
+      return [
+        {
+          ...effect,
+          text: rendered,
+        },
+      ];
+    }
+
+    const splited = rendered.split(partRandom);
+
+    let lastStart = match.start;
+
+    return splited.map((value, index) => {
+      const part = match.parts[index];
+
+      const currentStart = lastStart;
+
+      lastStart = part?.end;
+
+      const end = part ? part.start : match.end;
+
+      return {
+        uniqueTaskId:
+          splited.length > 1
+            ? `${effect.uniqueTaskId}-${index}`
+            : effect.uniqueTaskId,
+        start: currentStart,
+        end,
+        type: "replace",
+        text: value,
+      };
+    });
+  }
+
+  return {
+    ...task,
+    effects: effects.flatMap(renderEffect),
+    postEffects: postEffects?.flatMap(renderEffect),
+  };
+}
+
+/**
+ * replace holder with real value
+ * this opration will change the task effects
+ * @example replace('a{parts}b') will change to [repalce('a, value:{part1:'), replace('}, b')]
+ */
+export function getRenderedTasks(tasks: LocaleTask[], fileTasks: FileTask[]) {
+  return {
+    tasks: tasks.map(renderTask) as LocaleTask[],
+    fileTasks,
+  };
+}
 
 export function renderTasks(
   tasks: LocaleTask[],
@@ -11,71 +94,31 @@ export function renderTasks(
 
   const taskMap = new Map<string, boolean>();
 
-  tasks.forEach((task) => {
-    const { match, localeKey, effects, postEffects, context: rawContext } = task;
+  const { tasks: renderedTask, fileTasks: renderedFileTask } = getRenderedTasks(
+    tasks,
+    fileTasks
+  );
 
-    const context = {
-      ...rawContext,
-      localeKey,
-    };
-    [...effects, ...(postEffects || [])].forEach((effect) => {
-      const { uniqueTaskId } = effect;
-
-      if (uniqueTaskId) {
-        if (taskMap.has(uniqueTaskId)) {
+  renderedTask.forEach((task) => {
+    [...task.effects, ...(task.postEffects || [])].forEach((effect) => {
+      if (effect.uniqueTaskId) {
+        if (taskMap.has(effect.uniqueTaskId)) {
           return;
         }
-        taskMap.set(uniqueTaskId, true);
+        taskMap.set(effect.uniqueTaskId, true);
       }
 
-      const renderContext = {
-        ...context,
-        isJSXText: match.type === SentenceType.JSXText,
-        isJSXAttributeText: match.type === SentenceType.JSXAttributeText,
-        isLiteral: match.type === SentenceType.Literal,
-        isTemplateLiteral: match.type === SentenceType.TemplateLiteral,
-      };
-
       if (effect.type === "replace") {
-        const { text } = effect;
-        if (match.parts.length) {
-          const partRandom = `------${Math.random()}-----`;
-          const parts = `\\{ ${match.parts
-            .map((e) => `${e.name}: ${partRandom}`)
-            .join(", ")} \\}`;
-
-          const rendered = renderTemplate(text, {
-            ...renderContext,
-            parts,
-          });
-
-          const splited = rendered.split(partRandom);
-
-          splited.reduce((start, text, index) => {
-            const part = match.parts[index];
-
-            const end = part ? part.start : match.end;
-
-            magicStr.overwrite(start, end, text);
-            return part?.end;
-          }, match.start);
-        } else {
-          magicStr.overwrite(
-            match.start,
-            match.end,
-            renderTemplate(text, renderContext)
-          );
-        }
+        const { start, end, text } = effect;
+        magicStr.overwrite(start, end, text);
       } else if (effect.type === "insert") {
-        magicStr.appendLeft(
-          effect.start,
-          renderTemplate(effect.text, renderContext)
-        );
+        const { start, text } = effect;
+        magicStr.appendLeft(start, text);
       }
     });
   });
 
-  fileTasks.forEach(({ tasks }) => {
+  renderedFileTask.forEach(({ tasks }) => {
     tasks.forEach((task) => {
       if (task.type === "replace") {
         const { start, end, text } = task;
