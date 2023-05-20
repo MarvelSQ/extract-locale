@@ -27,7 +27,7 @@ import {
   Trash,
   XSquare,
 } from "lucide-react";
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +36,9 @@ import {
 } from "../ui/tooltip";
 import { useTheme } from "../hooks/useTheme";
 import { Checkbox } from "../ui/checkbox";
+import { LocaleTask } from "../../../../src/type";
+import { calcPostTasks } from "../../../../src/utils/calcPostTasks";
+import { usePreviewTask } from "@/Task/usePreviewTask";
 
 function Preview({
   repo,
@@ -113,6 +116,71 @@ function Preview({
     return fileContent.data || "";
   }, [fileContent.data, task.data, isEmpty, showPreview, fileTaskPatch, tasks]);
 
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  const textTasks = useMemo(() => {
+    if (currentFileTask?.result && "tasks" in currentFileTask.result) {
+      const { matches } = calcPostTasks(currentFileTask.result);
+
+      return matches;
+    }
+  }, [currentFileTask?.result]);
+
+  const handleMatchClick = (
+    task: LocaleTask & {
+      postMatch: {
+        start: number;
+        end: number;
+      };
+    }
+  ) => {
+    const start = showPreview ? task.postMatch.start : task.match.start;
+
+    if (previewRef.current) {
+      let currentOffset = 0;
+
+      function walkNode(node: HTMLElement): HTMLElement | null {
+        const children = node.childNodes;
+
+        for (let i = 0; i < children.length; i++) {
+          const currentNode = children[i];
+
+          // text node
+          if (currentNode.nodeType === 3) {
+            const text = currentNode.textContent || "";
+
+            const nextOffset = currentOffset + text.length;
+
+            if (start >= currentOffset && start <= nextOffset) {
+              return node;
+            }
+
+            currentOffset = nextOffset;
+          } else {
+            const targetNode = walkNode(currentNode as HTMLElement);
+
+            if (targetNode) {
+              return targetNode;
+            }
+          }
+        }
+
+        return null;
+      }
+
+      const targetNode = walkNode(previewRef.current);
+
+      if (targetNode) {
+        console.log(targetNode);
+        targetNode.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        });
+      }
+    }
+  };
+
   return (
     <div
       className={cn("flex flex-col gap-2 group w-full", {
@@ -156,7 +224,7 @@ function Preview({
                   }
                   onClick={() => {
                     save.mutateAsync(
-                      tasks?.filter((task) => {
+                      (tasks as LocaleTask[]).filter((task) => {
                         return !fileTaskPatch[activePath as string]?.[
                           task.match.start
                         ]?.disable;
@@ -221,7 +289,7 @@ function Preview({
         </div>
       ) : (
         <div className="flex-grow flex flex-row gap-4 w-full">
-          <div className="flex-grow overflow-auto">
+          <div className="flex-grow overflow-auto" ref={previewRef}>
             {(fileContent.error as Error | undefined)?.message ===
             "No directory handle" ? (
               <p className="text-sm text-muted-foreground">
@@ -258,12 +326,12 @@ function Preview({
                   no matches found
                 </p>
               )}
-              {tasks?.map((task) => {
+              {textTasks?.map((task) => {
                 return (
                   <div
                     key={task.match.start}
                     className={cn(
-                      "flex flex-col gap-1 border-b border-accent pb-1 relative group/match-text",
+                      "flex flex-col gap-1 border-b border-accent pb-1 relative group/match-text cursor-pointer hover:bg-accent",
                       {
                         disable:
                           fileTaskPatch[activePath as string]?.[
@@ -271,6 +339,9 @@ function Preview({
                           ]?.disable,
                       }
                     )}
+                    onClick={() => {
+                      handleMatchClick(task);
+                    }}
                   >
                     <Edit className="absolute bottom-1 right-1 p-1 rounded hover:bg-accent cursor-pointer" />
                     <Square
