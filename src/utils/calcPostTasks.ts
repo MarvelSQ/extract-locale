@@ -18,7 +18,6 @@ export function calcPostTasks(
   const effections = tasks.flatMap((task) => {
     if (options?.ignore && options.ignore(task)) {
       ignoredEffections.push(...task.effects, ...(task.postEffects || []));
-      return [];
     }
 
     return [...task.effects, ...(task.postEffects || [])];
@@ -65,8 +64,13 @@ export function calcPostTasks(
       ...task.effects.map((effect) => {
         const { text, start } = effect;
 
-        const end =
-          start + (effectionMapOffset.get(effect) as number) + text.length;
+        const isIgnored = ignoredEffections.includes(effect);
+
+        const offset = effectionMapOffset.get(effect) as number;
+
+        const end = isIgnored
+          ? effect.end + offset
+          : start + text.length + offset;
 
         return end;
       })

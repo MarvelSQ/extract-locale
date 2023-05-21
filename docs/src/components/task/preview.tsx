@@ -120,23 +120,43 @@ function Preview({
 
   const textTasks = useMemo(() => {
     if (currentFileTask?.result && "tasks" in currentFileTask.result) {
-      const { matches } = calcPostTasks(currentFileTask.result);
+      const { matches } = calcPostTasks(currentFileTask.result, {
+        ignore(localeTask) {
+          return (
+            fileTaskPatch[activePath as string]?.[localeTask.match.start]
+              ?.disable || false
+          );
+        },
+      });
 
       return matches;
     }
-  }, [currentFileTask?.result]);
+  }, [currentFileTask?.result, fileTaskPatch]);
+
+  const textTasksRef = useRef(textTasks);
+
+  useMemo(() => {
+    textTasksRef.current = textTasks;
+  }, [textTasks]);
 
   const handleMatchClick = (
-    task: LocaleTask & {
+    baseTask: LocaleTask & {
       postMatch: {
         start: number;
         end: number;
       };
     }
   ) => {
-    const start = showPreview ? task.postMatch.start : task.match.start;
+    const task =
+      textTasksRef.current?.find((task) => task.match === baseTask.match) ||
+      baseTask;
 
-    const end = showPreview ? task.postMatch.end : task.match.end;
+    let { start, end } = task.match;
+
+    if (showPreview) {
+      start = task.postMatch.start;
+      end = task.postMatch.end;
+    }
 
     if (previewRef.current) {
       let currentOffset = 0;
@@ -357,7 +377,9 @@ function Preview({
                       }
                     )}
                     onClick={() => {
-                      handleMatchClick(task);
+                      setTimeout(() => {
+                        handleMatchClick(task);
+                      }, 0);
                     }}
                   >
                     <Edit className="absolute bottom-1 right-1 p-1 rounded hover:bg-accent cursor-pointer" />
