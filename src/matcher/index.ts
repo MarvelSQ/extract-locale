@@ -43,10 +43,17 @@ export function createMatcher({
           if (path.isJSXText()) {
             const value = path.node.value;
             if (test(value, filename)) {
+              const preSpaces = value.match(/^[\s\n]+/)?.[0].length || 0;
+              const postSpaces = value.match(/[\s\n]+$/)?.[0].length || 0;
+
+              const text = value
+                .substring(0, value.length - postSpaces)
+                .substring(preSpaces);
+
               sentences.push({
-                text: value,
-                start: path.node.start as number,
-                end: path.node.end as number,
+                text,
+                start: (path.node.start as number) + preSpaces,
+                end: (path.node.end as number) - postSpaces,
                 type: SentenceType.JSXText,
                 parts: [],
               });
@@ -70,7 +77,7 @@ export function createMatcher({
                 type: SentenceType.TemplateLiteral,
                 parts: path.node.expressions.map((e, i) => {
                   return {
-                    name:  `part${i + 1}`,
+                    name: `part${i + 1}`,
                     start: e.start as number,
                     end: e.end as number,
                   };
