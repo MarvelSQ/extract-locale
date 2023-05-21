@@ -37,6 +37,7 @@ import React, { useState } from "react";
 import { openDialog } from "@/lib/modal";
 import { SimpleFile, loadFiles } from "@/Task/loadFiles";
 import { useRepos, createRepo, deleteRepo } from "@/filesystem/queries";
+import Matches from "@/components/task/matches";
 
 type CardProps = React.ComponentProps<typeof Card>;
 
@@ -178,8 +179,9 @@ export function Task() {
           }}
           className="flex flex-col self-stretch w-full"
         >
-          <TabsList className="grid grid-cols-3 w-[300px]">
+          <TabsList className="grid grid-cols-4 w-[400px]">
             <TabsTrigger value="detail">Detail</TabsTrigger>
+            <TabsTrigger value="matches">Match List</TabsTrigger>
             <TabsTrigger value="files">File List</TabsTrigger>
             <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
@@ -188,6 +190,14 @@ export function Task() {
           </TabsContent>
           <TabsContent value="files">
             <Files
+              repo={match.repo as string}
+              onFileClick={(file) => {
+                navigate("/repo/" + match.repo + "/preview?file=" + file);
+              }}
+            />
+          </TabsContent>
+          <TabsContent value="matches">
+            <Matches
               repo={match.repo as string}
               onFileClick={(file) => {
                 navigate("/repo/" + match.repo + "/preview?file=" + file);
