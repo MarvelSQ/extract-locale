@@ -199,8 +199,15 @@ export function Task() {
           <TabsContent value="matches">
             <Matches
               repo={match.repo as string}
-              onFileClick={(file) => {
-                navigate("/repo/" + match.repo + "/preview?file=" + file);
+              onFileClick={(file, start) => {
+                navigate(
+                  "/repo/" +
+                    match.repo +
+                    "/preview?file=" +
+                    file +
+                    "&start=" +
+                    start
+                );
               }}
             />
           </TabsContent>
@@ -211,6 +218,7 @@ export function Task() {
             <Preview
               repo={match.repo as string}
               file={search.get("file")}
+              defaultStart={search.get("start")}
               fileTaskPatch={fileTaskPatch}
               onFileTaskPatchChange={(file, id, patch) => {
                 setFileTaskPatch((prev) => {

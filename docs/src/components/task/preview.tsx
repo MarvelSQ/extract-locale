@@ -27,7 +27,14 @@ import {
   Trash,
   XSquare,
 } from "lucide-react";
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -43,12 +50,14 @@ import { usePreviewTask } from "@/Task/usePreviewTask";
 function Preview({
   repo,
   file,
+  defaultStart,
   onFileChange,
   fileTaskPatch,
   onFileTaskPatchChange,
 }: {
   repo: string;
   file: string | null;
+  defaultStart: string | null;
   onFileChange: (file: string) => void;
   fileTaskPatch: Record<
     string,
@@ -132,6 +141,28 @@ function Preview({
       return matches;
     }
   }, [currentFileTask?.result, fileTaskPatch]);
+
+  const defaultHighlight = useMemo(() => {
+    let called = false;
+
+    return (textTasks: LocaleTask[]) => {
+      if (called) return;
+      called = true;
+
+      if (defaultStart) {
+        const task = textTasks.find(
+          (task) => `${task.match.start}` === defaultStart
+        );
+        task && handleMatchClick(task as any);
+      }
+    };
+  }, [defaultStart]);
+
+  useEffect(() => {
+    setTimeout(() => {
+      textTasks && defaultHighlight(textTasks);
+    }, 0);
+  }, [textTasks]);
 
   const textTasksRef = useRef(textTasks);
 

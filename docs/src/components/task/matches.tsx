@@ -16,7 +16,7 @@ function Matches({
   onFileClick,
 }: {
   repo: string;
-  onFileClick: (file: string) => void;
+  onFileClick: (file: string, start: number) => void;
 }) {
   const fileTasks = useFileTasks(repo);
 
@@ -81,7 +81,7 @@ function Matches({
                   <div
                     key={file.path}
                     className="cursor-pointer hover:underline"
-                    onClick={() => onFileClick(file.path)}
+                    onClick={() => onFileClick(file.path, file.start)}
                   >
                     {file.path}:{file.start}
                   </div>
