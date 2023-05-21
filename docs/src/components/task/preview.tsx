@@ -151,7 +151,7 @@ function Preview({
 
             const nextOffset = currentOffset + text.length;
 
-            if (start >= currentOffset && start <= nextOffset) {
+            if (start >= currentOffset && start < nextOffset) {
               return node;
             }
 
