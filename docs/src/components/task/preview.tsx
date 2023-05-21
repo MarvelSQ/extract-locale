@@ -158,6 +158,8 @@ function Preview({
       end = task.postMatch.end;
     }
 
+    console.log("match content", content.substring(start, end));
+
     if (previewRef.current) {
       let currentOffset = 0;
 

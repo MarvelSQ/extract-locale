@@ -31,20 +31,30 @@ export function calcPostTasks(
 
   const effectionMapOffset = new Map<Effection, number>();
 
+  const renderedTaskIds: string[] = [];
+
   effections.forEach((effection) => {
     if (effection.uniqueTaskId) {
       if (taskIdMap.has(effection.uniqueTaskId)) {
+        const lastEffection = taskIdMap.get(effection.uniqueTaskId);
         effectionMapOffset.set(
           effection,
-          effectionMapOffset.get(effection) as number
+          effectionMapOffset.get(lastEffection as Effection) as number
         );
-        return;
+        if (renderedTaskIds.includes(effection.uniqueTaskId)) {
+          return;
+        }
+      } else {
+        taskIdMap.set(effection.uniqueTaskId, effection);
       }
-      taskIdMap.set(effection.uniqueTaskId, effection);
     }
     effectionMapOffset.set(effection, currentOffset);
 
     if (ignoredEffections.includes(effection)) return;
+
+    if (effection.uniqueTaskId) {
+      renderedTaskIds.push(effection.uniqueTaskId);
+    }
 
     if (effection.type === "insert") {
       currentOffset += effection.text.length;
