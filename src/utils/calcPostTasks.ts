@@ -62,9 +62,14 @@ export function calcPostTasks(
     );
 
     const postEnd = Math.max(
-      ...task.effects.map(
-        (effect) => effect.end + (effectionMapOffset.get(effect) as number)
-      )
+      ...task.effects.map((effect) => {
+        const { text, start } = effect;
+
+        const end =
+          start + (effectionMapOffset.get(effect) as number) + text.length;
+
+        return end;
+      })
     );
 
     return {
