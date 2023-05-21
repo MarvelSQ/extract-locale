@@ -3,6 +3,9 @@ import { openExtractLocale } from ".";
 import * as Task from "@/Task/init";
 import { Repo } from "@/Task/Entity";
 import { LocaleTask } from "../../../src/type";
+import { SimpleFile, loadFiles } from "@/Task/loadFiles";
+import { openDialog } from "@/lib/modal";
+import Fileselector from "@/components/task/fileselector";
 
 export const repoQueryClient = new QueryClient({
   defaultOptions: {
@@ -276,4 +279,35 @@ export function useFileTasks(name: string) {
   );
 
   return fileTasks;
+}
+
+export async function openNewRepo() {
+  const id = Math.random().toString(36).substring(2, 10);
+  const { name, files, handle } = await loadFiles(id);
+  const fileMap = files.reduce((acc, cur) => {
+    acc[cur.path] = cur;
+    return acc;
+  }, {} as Record<string, SimpleFile>);
+
+  return new Promise<string>((res) => {
+    openDialog(Fileselector, {
+      directory: name,
+      files: files.map((file) => ({
+        key: file.path,
+        title: file.path,
+      })),
+      onConfirm: (keys) => {
+        const files = keys
+          .sort()
+          .map((key) => fileMap[key])
+          .map((file) => ({
+            path: file.path,
+          }));
+
+        createRepo(name, files, id, handle as FileSystemDirectoryHandle);
+
+        res(name);
+      },
+    });
+  });
 }

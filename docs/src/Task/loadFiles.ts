@@ -68,9 +68,5 @@ export async function loadFiles(id: string): Promise<{
     };
   }
 
-  return {
-    name: "unknown",
-    files: [],
-    directoryHandleId: id,
-  };
+  throw new Error("Could not load files");
 }
