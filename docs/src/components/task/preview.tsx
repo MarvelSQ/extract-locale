@@ -136,10 +136,19 @@ function Preview({
   ) => {
     const start = showPreview ? task.postMatch.start : task.match.start;
 
+    const end = showPreview ? task.postMatch.end : task.match.end;
+
     if (previewRef.current) {
       let currentOffset = 0;
 
-      function walkNode(node: HTMLElement): HTMLElement | null {
+      function walkNode(
+        node: HTMLElement,
+        nodes: HTMLElement[] = []
+      ): HTMLElement[] {
+        if (currentOffset > end) {
+          return nodes;
+        }
+
         const children = node.childNodes;
 
         for (let i = 0; i < children.length; i++) {
@@ -152,27 +161,35 @@ function Preview({
             const nextOffset = currentOffset + text.length;
 
             if (start >= currentOffset && start < nextOffset) {
-              return node;
+              nodes.push(node);
+            } else if (start < currentOffset && end >= nextOffset) {
+              nodes.push(node);
             }
 
             currentOffset = nextOffset;
           } else {
-            const targetNode = walkNode(currentNode as HTMLElement);
-
-            if (targetNode) {
-              return targetNode;
-            }
+            walkNode(currentNode as HTMLElement, nodes);
           }
         }
 
-        return null;
+        return nodes;
       }
 
-      const targetNode = walkNode(previewRef.current);
+      const targetNodes = walkNode(previewRef.current);
 
-      if (targetNode) {
-        console.log(targetNode);
-        targetNode.scrollIntoView({
+      if (targetNodes[0]) {
+        console.log(targetNodes);
+
+        const range = document.createRange();
+
+        range.setStart(targetNodes[0], 0);
+        range.setEnd(targetNodes[targetNodes.length - 1], 1);
+
+        const highlight = new Highlight(range);
+
+        CSS.highlights.set("text-match", highlight);
+
+        targetNodes[0].scrollIntoView({
           behavior: "smooth",
           block: "center",
           inline: "center",
