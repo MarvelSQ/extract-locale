@@ -26,6 +26,7 @@ function Matches({
     type TextCell = {
       textId: string;
       match: LocaleTask["match"];
+      localeKey: string;
       files: {
         path: string;
         start: number;
@@ -45,6 +46,7 @@ function Matches({
           if (!(textId in textMap)) {
             textMap[textId] = {
               textId,
+              localeKey: task.localeKey,
               match: task.match,
               files: [],
             };
@@ -67,6 +69,7 @@ function Matches({
       <TableCaption>{repo}</TableCaption>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-[100px]">Locale Key</TableHead>
           <TableHead>Text Match</TableHead>
           <TableHead className="text-right">files</TableHead>
         </TableRow>
@@ -74,6 +77,7 @@ function Matches({
       <TableBody>
         {matches.map((text) => (
           <TableRow key={text.textId}>
+            <TableCell className="font-medium">{text.localeKey}</TableCell>
             <TableCell className="font-medium">{text.textId}</TableCell>
             <TableCell className="text-right">
               {text.files.map((file) => {
