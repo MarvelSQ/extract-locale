@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* @import "./Task/index.css";
+
+#root {
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+.demo-btn {
+  background: linear-gradient(to right, red, blue);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: rgba(255, 255, 255, 0) !important;
+  font-weight: 600;
+  transition: color 0.6s ease-in;
+}
+
+.demo-btn:hover {
+  border-color: unset !important;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: rgba(255, 255, 255, 1) !important;
+}
+
+#root:has(.ant-tabs) {
+  display: grid;
+  grid-template-columns: 1fr max-content;
+  grid-template-rows: 70px calc(100vh - 140px) min-content;
+  overflow: hidden;
+}
+
+#root:has(.ant-tabs) > .ant-typography {
+  margin-left: 20px;
+  margin-bottom: 0;
+}
+
+#root:has(.ant-tabs) > .ant-space {
+  margin-right: 30px;
+}
+
+#root > .ant-tabs {
+  grid-column: span 2;
+  align-self: stretch;
+}
+
+#root > .control-bar {
+  grid-column: span 2;
+}
+
+.file-explorer-card {
+  flex-grow: 1;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: max-content 1fr;
+  width: calc(100vw - 40px);
+  overflow: hidden;
+
+  border-radius: 8px;
+  border: 1px solid #d9d9d9;
+}
+
+.file-explorer-card-content {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.file-explorer-card > .ant-tree {
+  overflow: auto;
+  border-right: 1px solid #d9d9d9;
+  border-top-right-radius: 0;
+  border-top-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.file-explorer-card-content-selected-file {
+  position: relative;
+  overflow: auto;
+}
+
+.task-matched {
+  background-color: rgba(0, 0, 0, 0.3);
+} */
+
+/* .selected-file-title {
+  position: sticky;
+  top: 0;
+  line-height: 30px;
+  font-size: 16px;
+
+  background-color: #fff;
+}
+
+.selected-file-title .ant-btn {
+  float: right;
+}
+
+.file-explorer-card-content > .file-explorer-card-content-selected-file {
+  flex-basis: 0;
+  transition: flex-basis 0.3s ease-in-out;
+  overflow: auto;
+}
+
+.file-explorer-card-content
+  > .file-explorer-card-content-selected-file.has-content {
+  flex-basis: 100%;
+} */

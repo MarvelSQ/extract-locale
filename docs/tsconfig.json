@@ -1,8 +1,12 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
+    "moduleResolution": "node",
+    "module": "ESNext",
     "jsx": "react-jsx",
-    "jsxImportSource": "preact"
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["./**.tsx"]
+  "include": ["./src/**/*.tsx", "./src/**/*.ts"]
 }

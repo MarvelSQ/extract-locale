@@ -1,0 +1,89 @@
+.file-selector-modal .ant-modal-confirm-content {
+  width: 100%;
+}
+
+.file-selector-modal .ant-modal-confirm-content .ant-space {
+  display: flex;
+  align-items: stretch;
+}
+
+.file-selector-modal
+  .ant-modal-confirm-content
+  .ant-space
+  .ant-space-item:last-child {
+  align-self: center;
+}
+
+.file-selector .ant-transfer-list {
+  flex-basis: 50%;
+  overflow: hidden;
+  height: 500px;
+}
+
+.file-selector
+  .ant-transfer-list
+  .ant-transfer-list-body
+  .ant-transfer-list-body-customize-wrapper {
+  height: 100%;
+  overflow: auto;
+}
+
+.ant-tabs-nav-list {
+  margin-left: 30px;
+}
+
+.ant-tabs-content {
+  height: 100%;
+}
+
+.ant-tabs-content-holder {
+  margin: 0 30px;
+  overflow: hidden;
+}
+
+.ant-tabs-tabpane {
+  height: 100%;
+}
+
+.file-viewer {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+
+  display: flex;
+
+  flex-direction: row;
+
+  align-items: stretch;
+}
+
+.file-viewer .ant-list {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.ant-list-item {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-viewer .file-preview {
+  flex-basis: 80%;
+  overflow: auto;
+}
+
+.file-preview .file-preview-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.control-bar {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  border-top: 1px solid #f0f0f0;
+  padding: 20px;
+  text-align: center;
+}
