@@ -80,7 +80,9 @@ export function Task() {
           width: "calc(100vw - 300px)",
         }}
       >
-        {(!match.tab || match.tab === "detail") && <Detail />}
+        {(!match.tab || match.tab === "detail") && (
+          <Detail repo={match.repo as string} />
+        )}
         {match.tab === "files" && (
           <Files
             repo={match.repo as string}

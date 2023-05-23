@@ -57,6 +57,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
+import DictmapDialog from "./dictmap-dialog";
 
 const { plugins } = DefaultSettings;
 
@@ -542,7 +543,7 @@ const defaultValues: z.infer<typeof formSchema> = {
   plugins: DefaultSettings.plugins,
 };
 
-function Detail() {
+function Detail({ repo }: { repo: string }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues,
@@ -628,7 +629,19 @@ function Detail() {
                 name="localeKeyPattern"
                 render={({ field }) => {
                   return (
-                    <Input value={field.value} onChange={field.onChange} />
+                    <div className="flex flex-row gap-4">
+                      <Input value={field.value} onChange={field.onChange} />
+                      <Button
+                        className="flex-shrink-0"
+                        onClick={() => {
+                          openDialog(DictmapDialog, {
+                            repo,
+                          });
+                        }}
+                      >
+                        Set DictMap
+                      </Button>
+                    </div>
                   );
                 }}
               ></FormField>

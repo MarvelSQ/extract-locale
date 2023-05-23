@@ -51,11 +51,11 @@ const root = createRoot(document.getElementById("root") as HTMLElement);
 
 root.render(
   <React.StrictMode>
-    <ModalProvider>
-      <QueryClientProvider client={repoQueryClient}>
+    <QueryClientProvider client={repoQueryClient}>
+      <ModalProvider>
         <RouterProvider router={router} />
         <Analytics />
-      </QueryClientProvider>
-    </ModalProvider>
+      </ModalProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );

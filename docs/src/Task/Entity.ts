@@ -43,12 +43,16 @@ export class Repo {
     this.config = config || {};
   }
 
-  set handle(directoryHandle: FileSystemDirectoryHandle) {
+  set handle(directoryHandle: FileSystemDirectoryHandle | null) {
     Promise.resolve().then(() => {
       this.executeTask(this.config);
     });
 
     this.directoryHandle = directoryHandle;
+  }
+
+  get handle() {
+    return this.directoryHandle;
   }
 
   update(files: { path: string; handle: FileSystemFileHandle }[]) {
