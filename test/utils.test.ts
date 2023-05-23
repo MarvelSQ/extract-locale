@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 
-import { getNodeJSRelativePath } from "../src/utils/path";
+import { getNodeJSRelativePath, getModulePath } from "../src/utils/path";
 
 test("getNodeJSRelativePath", () => {
   expect(getNodeJSRelativePath("./index.js", "./Intl/index")).toBe(
@@ -12,4 +12,14 @@ test("getNodeJSRelativePath", () => {
   expect(getNodeJSRelativePath("./component/index.js", "./Intl/Provider")).toBe(
     "../Intl/Provider"
   );
+});
+
+test("getModulePath", () => {
+  expect(getModulePath("./base", "/src/utils/path.ts")).toBe("/src/utils/base");
+
+  expect(getModulePath("../base", "/src/utils/path.ts")).toBe("/src/base");
+
+  expect(getModulePath("base", "/src/utils/path.ts")).toBe("base");
+
+  expect(getModulePath("./", "/src/utils/path.ts")).toBe("/src/utils");
 });
