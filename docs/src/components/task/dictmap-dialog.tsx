@@ -10,12 +10,29 @@ import {
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { openConfirm, openDialog } from "@/lib/modal";
-import { openHandle, repoQueryClient, useRepo } from "@/filesystem/queries";
+import {
+  openHandle,
+  repoQueryClient,
+  useDictMap,
+  useDictMapImport,
+  useRepo,
+  useRepoHandle,
+} from "@/filesystem/queries";
 import { useQuery } from "@tanstack/react-query";
 import { getItems } from "@/filesystem/utils";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Popover } from "../ui/popover";
+import { PopoverTrigger } from "../ui/popover";
+import { PopoverContent } from "../ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 async function getAllFiles(
   handle: FileSystemDirectoryHandle,
@@ -126,81 +143,62 @@ function Tree({
   );
 }
 
-function FileSelectorDialog({
+function FileSelector({
   repo,
-  open,
-  onClose,
+  value,
+  onChange,
 }: {
   repo: string;
-  open: boolean;
-  onClose: () => void;
+  value: string | null;
+  onChange: (value: string) => void;
 }) {
-  const [, setUpdate] = useState(0);
-  const repoHandle = useRepo(repo);
-
-  const [selected, setSelected] = useState<string | null>(null);
+  const repoHandle = useRepoHandle(repo);
 
   const files = useQuery(
     ["ALL_FILES", repo],
     () => {
-      return getAllFiles(
-        (repoHandle.data as any).handle as FileSystemDirectoryHandle
-      );
+      return getAllFiles(repoHandle.data as FileSystemDirectoryHandle);
     },
     {
-      enabled: !!repoHandle.data?.handle,
+      enabled: !!repoHandle.data,
       refetchOnMount: "always",
     }
   );
 
-  console.log("repoHandle", repoHandle.data?.handle);
+  console.log("repoHandle", repoHandle.data);
   console.log("files", files.data);
 
   return (
-    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Select Module</DialogTitle>
-        </DialogHeader>
-        <div>
-          <div className="p-2 border-primary border-b">
-            {selected || `select file to generate locale key`}
-          </div>
-          <ScrollArea className="h-72">
-            <div className="flex flex-col">
-              {files.data?.map((file) => (
-                <Tree
-                  key={file.value}
-                  data={file}
-                  selected={selected}
-                  onSelect={setSelected}
-                />
-              ))}
-            </div>
-          </ScrollArea>
-          {!repoHandle.data?.handle && (
-            <Button
-              onClick={() => {
-                openHandle(repo).then(() => {
-                  repoHandle.refetch();
-                });
-              }}
-            >
-              open Handle
-            </Button>
-          )}
-        </div>
-        <DialogFooter>
+    <Popover /** set modal can make content scroll */ modal>
+      <PopoverTrigger asChild>
+        <Button variant="outline">{value ? value : "select file"}</Button>
+      </PopoverTrigger>
+      <PopoverContent>
+        {!repoHandle.data && (
           <Button
             onClick={() => {
-              setUpdate((v) => v + 1);
+              openHandle(repo).then(() => {
+                repoQueryClient.invalidateQueries(["GET_REPO_HANDLE"]);
+              });
             }}
           >
-            build
+            open handle
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        )}
+        <ScrollArea className="h-80">
+          <div className="flex flex-col">
+            {files.data?.map((file) => (
+              <Tree
+                key={file.value}
+                data={file}
+                selected={value}
+                onSelect={onChange}
+              />
+            ))}
+          </div>
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -213,11 +211,25 @@ function DictmapDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const [importModule, setImportModule] = useState<string | null>(null);
+
+  const imports = useDictMap(repo);
+
+  const importDict = useDictMapImport(repo, {
+    onSuccess(data) {
+      setDictMap(JSON.stringify(data.result, null, 2));
+    },
+  });
+
+  const [dictMap, setDictMap] = useState("");
+
   return (
     <Dialog
       open={open}
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!importDict.isLoading) {
+          if (!open) onClose();
+        }
       }}
     >
       <DialogContent>
@@ -236,21 +248,75 @@ function DictmapDialog({
   "world": "世界"
 }
 `}
+            value={dictMap}
+            onChange={(event) => setDictMap(event.target.value)}
           />
+        </div>
+        {!!imports.data?.length && (
+          <Select
+            onValueChange={(value) => {
+              const record = imports.data.find(
+                (t) => `${t.timestamp}` === value
+              );
+              record && setDictMap(JSON.stringify(record.result, null, 2));
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              {imports.data.map((record) => {
+                return (
+                  <SelectItem
+                    key={record.timestamp}
+                    value={`${record.timestamp}`}
+                  >
+                    {new Date(record.timestamp).toISOString()} -{" "}
+                    {record.entryModule}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+        )}
+        <div
+          className={cn("grid gap-2", {
+            "grid-cols-[1fr_max-content]": importModule !== null,
+          })}
+        >
+          <FileSelector
+            repo={repo}
+            value={importModule}
+            onChange={setImportModule}
+          />
+          {importModule && (
+            <Button
+              onClick={() => {
+                importDict.mutate(importModule);
+              }}
+              disabled={importDict.isLoading}
+            >
+              {importDict.isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                "import"
+              )}
+            </Button>
+          )}
         </div>
         <DialogFooter>
           <Button
             variant="outline"
             onClick={() => {
-              openConfirm(
-                "Are you sure to import local module?",
-                "local import may take a long time",
-                () => {
-                  openDialog(FileSelectorDialog, {
-                    repo,
-                  });
-                }
-              );
+              // openConfirm(
+              //   "Are you sure to import local module?",
+              //   "local import may take a long time",
+              //   () => {
+              //     openDialog(FileSelectorDialog, {
+              //       repo,
+              //     });
+              //   }
+              // );
             }}
           >
             Import Local Module

@@ -17,7 +17,7 @@ export async function build(
 
   const nodeHelper = new NodeHelper(handle);
 
-  run(entryModule, {
+  return run(entryModule, {
     resolve(path, importer) {
       if (NodeHelper.isNodeJSInternalModule(path)) {
         return path;

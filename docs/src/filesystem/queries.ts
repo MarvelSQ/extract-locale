@@ -6,6 +6,7 @@ import { LocaleTask } from "../../../src/type";
 import { SimpleFile, loadFiles } from "@/Task/loadFiles";
 import { openDialog } from "@/lib/modal";
 import Fileselector from "@/components/task/fileselector";
+import { build } from "@/build/build";
 
 export const repoQueryClient = new QueryClient({
   defaultOptions: {
@@ -82,6 +83,14 @@ export function useRepos() {
 export function useRepo(name: string) {
   const repo = useQuery(["GET_REPO", name], () => {
     return getRepo(name);
+  });
+
+  return repo;
+}
+
+export function useRepoHandle(name: string) {
+  const repo = useQuery(["GET_REPO_HANDLE", name], () => {
+    return getRepo(name)?.handle || Promise.reject(new Error("no handle"));
   });
 
   return repo;
@@ -310,4 +319,67 @@ export async function openNewRepo() {
       },
     });
   });
+}
+
+type BuildRecord = {
+  entryModule: string;
+  timestamp: number;
+  result: any;
+};
+
+let cacheResult: Record<string, BuildRecord[]> = {};
+
+const local = localStorage.getItem("import_build_cache");
+if (local) {
+  cacheResult = JSON.parse(local);
+}
+
+function updateLocal() {
+  localStorage.setItem("import_build_cache", JSON.stringify(cacheResult));
+}
+
+export function useDictMap(repo: string) {
+  const result = useQuery(["GET_REPO_IMPORTS", repo], () => {
+    return [...(cacheResult[repo] || [])];
+  });
+
+  return result;
+}
+
+export function useDictMapImport(
+  repo: string,
+  option?: {
+    onSuccess: (record: BuildRecord) => void;
+  }
+) {
+  const importDictMap = useMutation(
+    (path: string) => {
+      const timestamp = new Date().getTime();
+      const targetRepo = getRepo(repo);
+      return targetRepo?.handle
+        ? build(targetRepo.handle, path).then((res) => {
+            const record = {
+              timestamp,
+              entryModule: path,
+              result: res,
+            };
+            cacheResult[repo] = cacheResult[repo] || [];
+            cacheResult[repo].push(record);
+
+            updateLocal();
+
+            return record;
+          })
+        : Promise.reject("No handle found");
+    },
+    {
+      ...option,
+      onSuccess(data) {
+        option?.onSuccess(data);
+        repoQueryClient.invalidateQueries(["GET_REPO_IMPORTS"]);
+      },
+    }
+  );
+
+  return importDictMap;
 }

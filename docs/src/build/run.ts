@@ -67,5 +67,7 @@ export async function run(
     });
 
     console.log("module", module.exports);
+
+    return module.exports;
   }
 }
