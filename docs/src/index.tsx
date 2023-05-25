@@ -9,10 +9,11 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import "./main.css";
 import { Home } from "./pages";
-import { Task } from "./pages/Task";
+import { RedirectTask, Task } from "./pages/Task";
 import { Root } from "./pages/Root";
 import { ModalProvider } from "./lib/modal";
 import { repoQueryClient } from "./filesystem/queries";
+import Builder from "./pages/Builder";
 
 const RedirectRoute = () => {
   const params = new URLSearchParams(window.location.search);
@@ -32,12 +33,20 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
+        path: "repo",
+        element: <RedirectTask />,
+      },
+      {
         path: "repo/:repo",
         element: <Task />,
       },
       {
         path: "repo/:repo/:tab",
         element: <Task />,
+      },
+      {
+        path: "builder",
+        element: <Builder />,
       },
       {
         path: "index.html",

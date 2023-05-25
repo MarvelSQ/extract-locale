@@ -72,10 +72,16 @@ function getRepo(name: string) {
   return repos.find((repo) => repo.name === name);
 }
 
-export function useRepos() {
-  const repos = useQuery(["GET_REPOS"], () => {
-    return getRepos();
-  });
+export function useRepos({ suspense = false } = {}) {
+  const repos = useQuery(
+    ["GET_REPOS"],
+    () => {
+      return getRepos();
+    },
+    {
+      suspense,
+    }
+  );
 
   return repos;
 }
