@@ -9,10 +9,12 @@ import {
 import { QueryClientProvider } from "@tanstack/react-query";
 import "./main.css";
 import { Home } from "./pages";
-import { Task } from "./pages/Task";
+import { RedirectTask, Task } from "./pages/Task";
 import { Root } from "./pages/Root";
 import { ModalProvider } from "./lib/modal";
 import { repoQueryClient } from "./filesystem/queries";
+import Builder from "./pages/Builder";
+import { Toaster } from "./components/ui/toaster";
 
 const RedirectRoute = () => {
   const params = new URLSearchParams(window.location.search);
@@ -32,12 +34,20 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
+        path: "repo",
+        element: <RedirectTask />,
+      },
+      {
         path: "repo/:repo",
         element: <Task />,
       },
       {
         path: "repo/:repo/:tab",
         element: <Task />,
+      },
+      {
+        path: "builder",
+        element: <Builder />,
       },
       {
         path: "index.html",
@@ -51,11 +61,12 @@ const root = createRoot(document.getElementById("root") as HTMLElement);
 
 root.render(
   <React.StrictMode>
-    <ModalProvider>
-      <QueryClientProvider client={repoQueryClient}>
+    <QueryClientProvider client={repoQueryClient}>
+      <ModalProvider>
         <RouterProvider router={router} />
+        <Toaster />
         <Analytics />
-      </QueryClientProvider>
-    </ModalProvider>
+      </ModalProvider>
+    </QueryClientProvider>
   </React.StrictMode>
 );

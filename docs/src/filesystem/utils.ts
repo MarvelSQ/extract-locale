@@ -173,38 +173,88 @@ export function getHistory(directory: string) {
   };
 }
 
+export async function getFileOrTarget(
+  handle: FileSystemDirectoryHandle,
+  filePath: string
+): Promise<
+  | {
+      status: "found";
+      handle: FileSystemDirectoryHandle | FileSystemFileHandle;
+      type: "directory" | "file";
+      files: FileSystemHandle[] | null;
+    }
+  | {
+      status: "not found";
+      breakHandle: FileSystemDirectoryHandle;
+      restPath: string;
+      files: FileSystemHandle[];
+    }
+  | {
+      status: "ancestor is file";
+      breakHandle: FileSystemFileHandle;
+      restPath: string;
+    }
+> {
+  const paths = filePath.split("/");
+
+  let currentHandle: FileSystemDirectoryHandle | FileSystemFileHandle = handle;
+
+  for (let i = 0; i < paths.length; i++) {
+    if (currentHandle instanceof FileSystemFileHandle) {
+      return {
+        status: "ancestor is file",
+        breakHandle: currentHandle,
+        restPath: paths.slice(i).join("/"),
+      };
+    }
+    const files = await getItems(currentHandle);
+
+    const file = files.find((file) => file.name === paths[i]);
+
+    if (file) {
+      currentHandle = file;
+      continue;
+    }
+
+    return {
+      status: "not found",
+      breakHandle: currentHandle,
+      restPath: paths.slice(i).join("/"),
+      files,
+    };
+  }
+
+  return {
+    status: "found",
+    handle: currentHandle,
+    type:
+      currentHandle instanceof FileSystemDirectoryHandle ? "directory" : "file",
+    files:
+      currentHandle instanceof FileSystemDirectoryHandle
+        ? await getItems(currentHandle)
+        : null,
+  };
+}
+
 export async function getFile(
   handle: FileSystemDirectoryHandle,
   filePath: string
 ) {
-  const paths = filePath.split("/");
+  const target = await getFileOrTarget(handle, filePath);
 
-  let currentHandle: FileSystemDirectoryHandle = handle;
-
-  for (let i = 0; i < paths.length; i++) {
-    if (i === paths.length - 1) {
-      const nextHandle = await currentHandle.getFileHandle(paths[i]);
-      if (nextHandle instanceof FileSystemFileHandle) {
-        return nextHandle;
-      }
-
-      throw new Error("not file");
-    }
-
-    let prevHandle = currentHandle;
-
-    for await (const item of currentHandle.values()) {
-      if (item.name === paths[i]) {
-        if (item instanceof FileSystemDirectoryHandle) {
-          currentHandle = item;
-          break;
-        }
-        throw new Error("not directory");
-      }
-    }
-
-    if (prevHandle === currentHandle) {
-      throw new Error("not found");
-    }
+  if (target.status === "found" && target.type === "file") {
+    return target.handle as FileSystemFileHandle;
   }
+
+  console.log("not found file", target);
+
+  return null;
+}
+
+export async function getItems(handle: FileSystemDirectoryHandle) {
+  const collect: (FileSystemFileHandle | FileSystemDirectoryHandle)[] = [];
+  for await (const item of handle.values()) {
+    collect.push(item);
+  }
+  return collect;
 }

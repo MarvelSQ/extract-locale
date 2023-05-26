@@ -542,7 +542,7 @@ const defaultValues: z.infer<typeof formSchema> = {
   plugins: DefaultSettings.plugins,
 };
 
-function Detail() {
+function Detail({ repo }: { repo: string }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues,
@@ -639,6 +639,25 @@ function Detail() {
                 </code>{" "}
                 for auto increment number
               </FormDescription>
+            </FormItem>
+            <FormItem>
+              <FormLabel className="flex flex-row items-center justify-between">
+                <div>Dictionary</div>
+                <Button size="sm" variant="outline" onClick={() => {}}>
+                  Import Local Module
+                </Button>
+              </FormLabel>
+              <Textarea className="h-48"></Textarea>
+              <div className="grid grid-cols-2 gap-2">
+                <FormItem>
+                  <FormLabel>Template Spliter</FormLabel>
+                  <Input />
+                </FormItem>
+                <FormItem>
+                  <FormLabel>Template Spliter</FormLabel>
+                  <Input />
+                </FormItem>
+              </div>
             </FormItem>
             <FormItem>
               <FormLabel>

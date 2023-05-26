@@ -7,9 +7,15 @@ import Sidebar from "@/components/task/sidebar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRepos } from "@/filesystem/queries";
+import { useQuery } from "@tanstack/react-query";
 import { Folder } from "lucide-react";
 import React, { useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 
 export function Task() {
   const match = useParams();
@@ -80,7 +86,9 @@ export function Task() {
           width: "calc(100vw - 300px)",
         }}
       >
-        {(!match.tab || match.tab === "detail") && <Detail />}
+        {(!match.tab || match.tab === "detail") && (
+          <Detail repo={match.repo as string} />
+        )}
         {match.tab === "files" && (
           <Files
             repo={match.repo as string}
@@ -133,4 +141,14 @@ export function Task() {
       </div>
     </div>
   );
+}
+
+export function RedirectTask() {
+  const repos = useRepos();
+
+  if (!repos.data) {
+    return null;
+  }
+
+  return <Navigate to={"/repo/" + repos.data[0]?.name || "demo"} />;
 }

@@ -6,6 +6,7 @@ import { LocaleTask } from "../../../src/type";
 import { SimpleFile, loadFiles } from "@/Task/loadFiles";
 import { openDialog } from "@/lib/modal";
 import Fileselector from "@/components/task/fileselector";
+import { build } from "@/build/build";
 
 export const repoQueryClient = new QueryClient({
   defaultOptions: {
@@ -71,10 +72,16 @@ function getRepo(name: string) {
   return repos.find((repo) => repo.name === name);
 }
 
-export function useRepos() {
-  const repos = useQuery(["GET_REPOS"], () => {
-    return getRepos();
-  });
+export function useRepos({ suspense = false } = {}) {
+  const repos = useQuery(
+    ["GET_REPOS"],
+    () => {
+      return getRepos();
+    },
+    {
+      suspense,
+    }
+  );
 
   return repos;
 }
@@ -83,6 +90,23 @@ export function useRepo(name: string) {
   const repo = useQuery(["GET_REPO", name], () => {
     return getRepo(name);
   });
+
+  return repo;
+}
+
+export function useRepoHandle(name: string | null) {
+  const repo = useQuery(
+    ["GET_REPO_HANDLE", name],
+    () => {
+      return (
+        getRepo(name as string)?.handle ||
+        Promise.reject(new Error("no handle"))
+      );
+    },
+    {
+      enabled: !!name,
+    }
+  );
 
   return repo;
 }
@@ -310,4 +334,170 @@ export async function openNewRepo() {
       },
     });
   });
+}
+
+export type BuildRecord = {
+  repo: string;
+  status: "running" | "success" | "error";
+  entryModule: string;
+  timestamp: number;
+  result?: any;
+  finishtime?: number;
+};
+
+let cacheResult: Record<string, BuildRecord[]> = {};
+
+const local = localStorage.getItem("import_build_cache");
+if (local) {
+  cacheResult = JSON.parse(local);
+}
+
+function updateLocal() {
+  localStorage.setItem("import_build_cache", JSON.stringify(cacheResult));
+}
+
+export function useAllDictMap() {
+  return useQuery(["ALL_IMPORTS"], () => {
+    return Object.entries(cacheResult)
+      .flatMap(([key, records]) => {
+        return records.map((rec) => ({
+          ...rec,
+          repo: key,
+        }));
+      })
+      .sort((a, b) => (b.timestamp - a.timestamp > 0 ? 1 : -1));
+  });
+}
+
+export function useDictMap(repo: string) {
+  const result = useQuery(["GET_REPO_IMPORTS", repo], () => {
+    return [...(cacheResult[repo] || [])];
+  });
+
+  return result;
+}
+
+const ImportDictMessage: Record<
+  string,
+  {
+    type: "resolve" | "load" | "success" | "error";
+    message: string | string[];
+  }[]
+> = {};
+
+export function useImportDictBuild(
+  repo: string,
+  entryModule: string,
+  timestamp: number
+) {
+  const record = useQuery(
+    ["GET_IMPORT_DICT_BUILD", repo, entryModule, timestamp],
+    () => {
+      return cacheResult[repo].find(
+        (record) =>
+          record.entryModule === entryModule && record.timestamp === timestamp
+      );
+    },
+    {
+      refetchInterval(data) {
+        return data?.status === "running" ? 1000 : false;
+      },
+    }
+  );
+
+  return record;
+}
+
+export function useImportDictBuildLog(build?: BuildRecord) {
+  const messages = useQuery(
+    [
+      "GET_IMPORT_DICT_BUILD_LOG",
+      build?.repo,
+      build?.entryModule,
+      build?.timestamp,
+    ],
+    () => {
+      return [
+        ...(ImportDictMessage[
+          `${build.repo}-${build.entryModule}-${build.timestamp}`
+        ] || []),
+      ];
+    },
+    {
+      enabled: !!build,
+      refetchInterval: build?.status === "running" ? 1000 : false,
+    }
+  );
+
+  return messages;
+}
+
+export function useDictMapImport(
+  repo: string | null,
+  option?: {
+    onSuccess: (record: BuildRecord) => void;
+  }
+) {
+  const importDictMap = useMutation(
+    (path: string) => {
+      const timestamp = new Date().getTime();
+      const targetRepo = getRepo(repo as string);
+      if (targetRepo?.handle) {
+        const buildRecord: BuildRecord = {
+          repo: repo as string,
+          entryModule: path,
+          status: "running",
+          timestamp,
+        };
+        cacheResult[repo as string] = cacheResult[repo as string] || [];
+        cacheResult[repo as string].push(buildRecord);
+
+        repoQueryClient.invalidateQueries(["GET_REPO_IMPORTS"]);
+        repoQueryClient.invalidateQueries(["ALL_IMPORTS"]);
+
+        updateLocal();
+
+        build(targetRepo.handle, path, {
+          onMessage: (message) => {
+            ImportDictMessage[`${repo}-${path}-${timestamp}`] ||= [];
+            ImportDictMessage[`${repo}-${path}-${timestamp}`].push(message);
+          },
+        }).then((res) => {
+          cacheResult[repo as string] = cacheResult[repo as string] || [];
+          cacheResult[repo as string] = cacheResult[repo as string].map(
+            (record) => {
+              return record.timestamp === timestamp
+                ? {
+                    ...record,
+                    finishtime: new Date().getTime(),
+                    status: "success",
+                    result: res,
+                  }
+                : record;
+            }
+          );
+
+          updateLocal();
+
+          return cacheResult[repo as string].find(
+            (record) => record.timestamp === timestamp
+          ) as BuildRecord;
+        });
+
+        return Promise.resolve(buildRecord);
+      }
+
+      return Promise.reject("No handle found");
+    },
+    {
+      ...option,
+      onSuccess(data) {
+        option?.onSuccess(data);
+        repoQueryClient.invalidateQueries(["GET_REPO_IMPORTS"]);
+        repoQueryClient.invalidateQueries(["ALL_IMPORTS"]);
+      },
+    }
+  );
+
+  return importDictMap;
 }
