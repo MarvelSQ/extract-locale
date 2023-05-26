@@ -144,9 +144,11 @@ export function Task() {
 }
 
 export function RedirectTask() {
-  const repos = useRepos({
-    suspense: true,
-  });
+  const repos = useRepos();
 
-  return <Navigate to={"/repo/" + repos.data?.[0].name || "demo"} />;
+  if (!repos.data) {
+    return null;
+  }
+
+  return <Navigate to={"/repo/" + repos.data[0]?.name || "demo"} />;
 }

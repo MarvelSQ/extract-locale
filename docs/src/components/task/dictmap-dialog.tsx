@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,10 +17,18 @@ import {
   useDictMapImport,
   useRepo,
   useRepoHandle,
+  useRepos,
 } from "@/filesystem/queries";
 import { useQuery } from "@tanstack/react-query";
 import { getItems } from "@/filesystem/utils";
-import { ChevronRight, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  Check,
+  ChevronRight,
+  ChevronsUpDown,
+  Command,
+  Loader2,
+} from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Popover } from "../ui/popover";
@@ -33,6 +41,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import {
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "../ui/command";
+import { Combobox } from "../combobox";
+import { Repo } from "@/Task/Entity";
+import { useToast } from "../ui/use-toast";
 
 async function getAllFiles(
   handle: FileSystemDirectoryHandle,
@@ -148,7 +165,7 @@ function FileSelector({
   value,
   onChange,
 }: {
-  repo: string;
+  repo: string | null;
   value: string | null;
   onChange: (value: string) => void;
 }) {
@@ -160,32 +177,26 @@ function FileSelector({
       return getAllFiles(repoHandle.data as FileSystemDirectoryHandle);
     },
     {
+      keepPreviousData: false,
       enabled: !!repoHandle.data,
       refetchOnMount: "always",
     }
   );
 
-  console.log("repoHandle", repoHandle.data);
-  console.log("files", files.data);
-
   return (
     <Popover /** set modal can make content scroll */ modal>
       <PopoverTrigger asChild>
-        <Button variant="outline">{value ? value : "select file"}</Button>
+        <Button variant="outline" disabled={!repo}>
+          {value ? value : "select file"}
+        </Button>
       </PopoverTrigger>
       <PopoverContent>
-        {!repoHandle.data && (
-          <Button
-            onClick={() => {
-              openHandle(repo).then(() => {
-                repoQueryClient.invalidateQueries(["GET_REPO_HANDLE"]);
-              });
-            }}
-          >
-            open handle
-          </Button>
-        )}
         <ScrollArea className="h-80">
+          {files.isLoading && (
+            <div className="h-80 flex items-center justify-around animate-spin">
+              <Loader2 />
+            </div>
+          )}
           <div className="flex flex-col">
             {files.data?.map((file) => (
               <Tree
@@ -199,6 +210,97 @@ function FileSelector({
         </ScrollArea>
       </PopoverContent>
     </Popover>
+  );
+}
+
+export function NewDictImport({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const repos = useRepos();
+
+  const [targetRepo, setTargetRepo] = useState<string | null>(null);
+
+  const [entryModule, setEntryModule] = useState<string | null>(null);
+
+  const { toast } = useToast();
+
+  const importDict = useDictMapImport(targetRepo, {
+    onSuccess() {
+      onClose();
+      toast({
+        description: `${targetRepo} - ${entryModule} import success`,
+      });
+    },
+  });
+
+  const repoItems = useMemo(() => {
+    return (
+      repos.data?.map((repo) => ({
+        label: repo.name,
+        value: repo.name,
+      })) || []
+    );
+  }, [repos.data]);
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>New Dict Import</DialogTitle>
+          <DialogDescription>
+            Import existing dictionary from local file system.
+            <br />
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col gap-2">
+          <Combobox
+            value={targetRepo}
+            onChange={(value) => {
+              setTargetRepo(value);
+              const repo = (repos.data as Repo[]).find(
+                (repo) => repo.name === value
+              );
+
+              if (repo && !repo.handle) {
+                openHandle(value as string);
+              }
+              if (targetRepo !== value) {
+                setEntryModule(null);
+              }
+            }}
+            data={repoItems}
+          />
+          <FileSelector
+            repo={targetRepo}
+            value={entryModule}
+            onChange={setEntryModule}
+          />
+          <Button
+            disabled={!entryModule}
+            onClick={() => importDict.mutate(entryModule as string)}
+          >
+            {importDict.isLoading ? (
+              <Loader2 className="animate-spin inline-block" />
+            ) : (
+              "Import"
+            )}
+          </Button>
+          <div className="text-muted-foreground text-sm">
+            <AlertCircle size={16} className="inline-block" /> Notice: this may
+            take a while <wbr /> based on the number of module to be bundled.
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -94,10 +94,19 @@ export function useRepo(name: string) {
   return repo;
 }
 
-export function useRepoHandle(name: string) {
-  const repo = useQuery(["GET_REPO_HANDLE", name], () => {
-    return getRepo(name)?.handle || Promise.reject(new Error("no handle"));
-  });
+export function useRepoHandle(name: string | null) {
+  const repo = useQuery(
+    ["GET_REPO_HANDLE", name],
+    () => {
+      return (
+        getRepo(name as string)?.handle ||
+        Promise.reject(new Error("no handle"))
+      );
+    },
+    {
+      enabled: !!name,
+    }
+  );
 
   return repo;
 }
@@ -344,6 +353,17 @@ function updateLocal() {
   localStorage.setItem("import_build_cache", JSON.stringify(cacheResult));
 }
 
+export function useAllDictMap() {
+  return useQuery(["ALL_IMPORTS"], () => {
+    return Object.entries(cacheResult).flatMap(([key, records]) => {
+      return records.map((rec) => ({
+        repo: key,
+        ...rec,
+      }));
+    });
+  });
+}
+
 export function useDictMap(repo: string) {
   const result = useQuery(["GET_REPO_IMPORTS", repo], () => {
     return [...(cacheResult[repo] || [])];
@@ -353,7 +373,7 @@ export function useDictMap(repo: string) {
 }
 
 export function useDictMapImport(
-  repo: string,
+  repo: string | null,
   option?: {
     onSuccess: (record: BuildRecord) => void;
   }
@@ -361,7 +381,7 @@ export function useDictMapImport(
   const importDictMap = useMutation(
     (path: string) => {
       const timestamp = new Date().getTime();
-      const targetRepo = getRepo(repo);
+      const targetRepo = getRepo(repo as string);
       return targetRepo?.handle
         ? build(targetRepo.handle, path).then((res) => {
             const record = {
@@ -369,8 +389,8 @@ export function useDictMapImport(
               entryModule: path,
               result: res,
             };
-            cacheResult[repo] = cacheResult[repo] || [];
-            cacheResult[repo].push(record);
+            cacheResult[repo as string] = cacheResult[repo as string] || [];
+            cacheResult[repo as string].push(record);
 
             updateLocal();
 
@@ -383,6 +403,7 @@ export function useDictMapImport(
       onSuccess(data) {
         option?.onSuccess(data);
         repoQueryClient.invalidateQueries(["GET_REPO_IMPORTS"]);
+        repoQueryClient.invalidateQueries(["ALL_IMPORTS"]);
       },
     }
   );

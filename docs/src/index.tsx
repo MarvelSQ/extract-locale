@@ -14,6 +14,7 @@ import { Root } from "./pages/Root";
 import { ModalProvider } from "./lib/modal";
 import { repoQueryClient } from "./filesystem/queries";
 import Builder from "./pages/Builder";
+import { Toaster } from "./components/ui/toaster";
 
 const RedirectRoute = () => {
   const params = new URLSearchParams(window.location.search);
@@ -63,6 +64,7 @@ root.render(
     <QueryClientProvider client={repoQueryClient}>
       <ModalProvider>
         <RouterProvider router={router} />
+        <Toaster />
         <Analytics />
       </ModalProvider>
     </QueryClientProvider>

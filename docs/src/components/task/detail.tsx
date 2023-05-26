@@ -57,7 +57,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import DictmapDialog from "./dictmap-dialog";
 
 const { plugins } = DefaultSettings;
 
@@ -629,19 +628,7 @@ function Detail({ repo }: { repo: string }) {
                 name="localeKeyPattern"
                 render={({ field }) => {
                   return (
-                    <div className="flex flex-row gap-4">
-                      <Input value={field.value} onChange={field.onChange} />
-                      <Button
-                        className="flex-shrink-0"
-                        onClick={() => {
-                          openDialog(DictmapDialog, {
-                            repo,
-                          });
-                        }}
-                      >
-                        Set DictMap
-                      </Button>
-                    </div>
+                    <Input value={field.value} onChange={field.onChange} />
                   );
                 }}
               ></FormField>
@@ -652,6 +639,25 @@ function Detail({ repo }: { repo: string }) {
                 </code>{" "}
                 for auto increment number
               </FormDescription>
+            </FormItem>
+            <FormItem>
+              <FormLabel className="flex flex-row items-center justify-between">
+                <div>Dictionary</div>
+                <Button size="sm" variant="outline" onClick={() => {}}>
+                  Import Local Module
+                </Button>
+              </FormLabel>
+              <Textarea className="h-48"></Textarea>
+              <div className="grid grid-cols-2 gap-2">
+                <FormItem>
+                  <FormLabel>Template Spliter</FormLabel>
+                  <Input />
+                </FormItem>
+                <FormItem>
+                  <FormLabel>Template Spliter</FormLabel>
+                  <Input />
+                </FormItem>
+              </div>
             </FormItem>
             <FormItem>
               <FormLabel>
