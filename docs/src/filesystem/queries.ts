@@ -355,12 +355,14 @@ function updateLocal() {
 
 export function useAllDictMap() {
   return useQuery(["ALL_IMPORTS"], () => {
-    return Object.entries(cacheResult).flatMap(([key, records]) => {
-      return records.map((rec) => ({
-        repo: key,
-        ...rec,
-      }));
-    });
+    return Object.entries(cacheResult)
+      .flatMap(([key, records]) => {
+        return records.map((rec) => ({
+          repo: key,
+          ...rec,
+        }));
+      })
+      .sort((a, b) => (b.timestamp - a.timestamp > 0 ? -1 : 1));
   });
 }
 
