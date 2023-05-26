@@ -9,26 +9,17 @@ import {
 } from "../ui/dialog";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
-import { openConfirm, openDialog } from "@/lib/modal";
 import {
+  BuildRecord,
   openHandle,
-  repoQueryClient,
   useDictMap,
   useDictMapImport,
-  useRepo,
   useRepoHandle,
   useRepos,
 } from "@/filesystem/queries";
 import { useQuery } from "@tanstack/react-query";
 import { getItems } from "@/filesystem/utils";
-import {
-  AlertCircle,
-  Check,
-  ChevronRight,
-  ChevronsUpDown,
-  Command,
-  Loader2,
-} from "lucide-react";
+import { AlertCircle, ChevronRight, Loader2 } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Popover } from "../ui/popover";
@@ -41,15 +32,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import {
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "../ui/command";
 import { Combobox } from "../combobox";
 import { Repo } from "@/Task/Entity";
-import { useToast } from "../ui/use-toast";
 
 async function getAllFiles(
   handle: FileSystemDirectoryHandle,
@@ -215,9 +199,11 @@ function FileSelector({
 
 export function NewDictImport({
   open,
+  onConfirm,
   onClose,
 }: {
   open: boolean;
+  onConfirm: (build: BuildRecord) => void;
   onClose: () => void;
 }) {
   const repos = useRepos();
@@ -226,14 +212,10 @@ export function NewDictImport({
 
   const [entryModule, setEntryModule] = useState<string | null>(null);
 
-  const { toast } = useToast();
-
   const importDict = useDictMapImport(targetRepo, {
-    onSuccess() {
+    onSuccess(build) {
+      onConfirm(build);
       onClose();
-      toast({
-        description: `${targetRepo} - ${entryModule} import success`,
-      });
     },
   });
 

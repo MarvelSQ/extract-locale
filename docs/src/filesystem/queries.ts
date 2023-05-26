@@ -336,10 +336,13 @@ export async function openNewRepo() {
   });
 }
 
-type BuildRecord = {
+export type BuildRecord = {
+  repo: string;
+  status: "running" | "success" | "error";
   entryModule: string;
   timestamp: number;
-  result: any;
+  result?: any;
+  finishtime?: number;
 };
 
 let cacheResult: Record<string, BuildRecord[]> = {};
@@ -358,11 +361,11 @@ export function useAllDictMap() {
     return Object.entries(cacheResult)
       .flatMap(([key, records]) => {
         return records.map((rec) => ({
-          repo: key,
           ...rec,
+          repo: key,
         }));
       })
-      .sort((a, b) => (b.timestamp - a.timestamp > 0 ? -1 : 1));
+      .sort((a, b) => (b.timestamp - a.timestamp > 0 ? 1 : -1));
   });
 }
 
@@ -372,6 +375,61 @@ export function useDictMap(repo: string) {
   });
 
   return result;
+}
+
+const ImportDictMessage: Record<
+  string,
+  {
+    type: "resolve" | "load" | "success" | "error";
+    message: string | string[];
+  }[]
+> = {};
+
+export function useImportDictBuild(
+  repo: string,
+  entryModule: string,
+  timestamp: number
+) {
+  const record = useQuery(
+    ["GET_IMPORT_DICT_BUILD", repo, entryModule, timestamp],
+    () => {
+      return cacheResult[repo].find(
+        (record) =>
+          record.entryModule === entryModule && record.timestamp === timestamp
+      );
+    },
+    {
+      refetchInterval(data) {
+        return data?.status === "running" ? 1000 : false;
+      },
+    }
+  );
+
+  return record;
+}
+
+export function useImportDictBuildLog(build?: BuildRecord) {
+  const messages = useQuery(
+    [
+      "GET_IMPORT_DICT_BUILD_LOG",
+      build?.repo,
+      build?.entryModule,
+      build?.timestamp,
+    ],
+    () => {
+      return [
+        ...(ImportDictMessage[
+          `${build.repo}-${build.entryModule}-${build.timestamp}`
+        ] || []),
+      ];
+    },
+    {
+      enabled: !!build,
+      refetchInterval: build?.status === "running" ? 1000 : false,
+    }
+  );
+
+  return messages;
 }
 
 export function useDictMapImport(
@@ -384,21 +442,52 @@ export function useDictMapImport(
     (path: string) => {
       const timestamp = new Date().getTime();
       const targetRepo = getRepo(repo as string);
-      return targetRepo?.handle
-        ? build(targetRepo.handle, path).then((res) => {
-            const record = {
-              timestamp,
-              entryModule: path,
-              result: res,
-            };
-            cacheResult[repo as string] = cacheResult[repo as string] || [];
-            cacheResult[repo as string].push(record);
+      if (targetRepo?.handle) {
+        const buildRecord: BuildRecord = {
+          repo: repo as string,
+          entryModule: path,
+          status: "running",
+          timestamp,
+        };
+        cacheResult[repo as string] = cacheResult[repo as string] || [];
+        cacheResult[repo as string].push(buildRecord);
 
-            updateLocal();
+        repoQueryClient.invalidateQueries(["GET_REPO_IMPORTS"]);
+        repoQueryClient.invalidateQueries(["ALL_IMPORTS"]);
 
-            return record;
-          })
-        : Promise.reject("No handle found");
+        updateLocal();
+
+        build(targetRepo.handle, path, {
+          onMessage: (message) => {
+            ImportDictMessage[`${repo}-${path}-${timestamp}`] ||= [];
+            ImportDictMessage[`${repo}-${path}-${timestamp}`].push(message);
+          },
+        }).then((res) => {
+          cacheResult[repo as string] = cacheResult[repo as string] || [];
+          cacheResult[repo as string] = cacheResult[repo as string].map(
+            (record) => {
+              return record.timestamp === timestamp
+                ? {
+                    ...record,
+                    finishtime: new Date().getTime(),
+                    status: "success",
+                    result: res,
+                  }
+                : record;
+            }
+          );
+
+          updateLocal();
+
+          return cacheResult[repo as string].find(
+            (record) => record.timestamp === timestamp
+          ) as BuildRecord;
+        });
+
+        return Promise.resolve(buildRecord);
+      }
+
+      return Promise.reject("No handle found");
     },
     {
       ...option,
